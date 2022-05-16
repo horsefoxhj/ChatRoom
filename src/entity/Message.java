@@ -6,5 +6,5 @@ package entity;
  */
 public class Message {
     private String text;
-    
+    private String timeStamp;
 }
