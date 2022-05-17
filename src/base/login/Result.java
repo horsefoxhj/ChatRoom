@@ -1,4 +1,4 @@
-package client.Login;
+package base.login;
 
 /**
  * 保存结果成功数据或错误异常.
