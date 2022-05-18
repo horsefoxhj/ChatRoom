@@ -34,6 +34,4 @@ class LoginFormState {
     boolean isDataValid() {
         return isDataValid;
     }
-
-
 }

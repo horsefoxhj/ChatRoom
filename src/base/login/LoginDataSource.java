@@ -13,7 +13,7 @@ public class LoginDataSource {
     public Result login(String account, String password) {
         // TODO: 处理登录身份
         try {
-            if (account.equals("13800138000") && password.equals("123456")) {
+            if (account.equals("123") && password.equals("123")) {
 
                 User user = new User();
                 return new Result.Success<>(user);
@@ -22,10 +22,5 @@ public class LoginDataSource {
         } catch (Exception e) {
             return new Result.Error(new IOException("账号或密码错误", e));
         }
-    }
-
-    //网络请求登出操作
-    public void logout() {
-        // TODO: 撤销认证
     }
 }
