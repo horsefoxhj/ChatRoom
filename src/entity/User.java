@@ -1,16 +1,46 @@
 package entity;
 
-import java.util.List;
+import static base.Constants.OFFLINE;
 
-/**User
+/**
+ * User
+ *
  * @Author Hx
  * @Date 2022/5/15 22:12
  */
 public class User {
+    int status;
+    int uid;
     String name;
     String account;
     String password;
-    List<User> friends;
+
+    public User(int uid, String name, String account, String password) {
+        this.status = OFFLINE;
+        this.uid = uid;
+        this.name = name;
+        this.account = account;
+        this.password = password;
+    }
+
+    public User() {
+    }
+
+    public int getUid() {
+        return uid;
+    }
+
+    public void setUid(int uid) {
+        this.uid = uid;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
 
     public String getName() {
         return name;
@@ -34,23 +64,5 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public List<User> getFriends() {
-        return friends;
-    }
-
-    public void setFriends(List<User> friends) {
-        this.friends = friends;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "name='" + name + '\'' +
-                ", account='" + account + '\'' +
-                ", password='" + password + '\'' +
-                ", friends=" + friends +
-                '}';
     }
 }

@@ -1,12 +1,13 @@
 package server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import utils.TimeUtils;
+
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @Author Hx
@@ -14,46 +15,37 @@ import java.util.ArrayList;
  */
 public class ServerThread extends Thread {
 
-    //ä¿å­˜è¿æ¥åˆ°è¯¥æœåŠ¡çº¿ç¨‹çš„Clientçš„socket;
-    private volatile ArrayList<Socket> sockets;
+    private final int port;
+    //±£´æÁ¬½Óµ½¸Ã·şÎñÏß³ÌµÄClientµÄsocket;
+    private volatile List<Socket> sockets;
+    //µ±Ç°ÁÄÌìÊÒµÄ¶Ë¿Ú
     private ServerSocket serverSocket;
-    private Socket socket = null;
-    //å½“å‰èŠå¤©å®¤çš„ç«¯å£
-    private final int port = MyServer.getInstance().newPort();
-    //å½“å‰èŠå¤©å®¤çš„åå­—
+    //µ±Ç°ÁÄÌìÊÒµÄÃû×Ö
     private String groupName;
 
-    public ServerThread() throws IOException {
-        sockets = new ArrayList<>();
+    public ServerThread(int port) throws IOException {
+        sockets = Collections.synchronizedList(new ArrayList<>());
         serverSocket = new ServerSocket(port);
-        //èŠå¤©å®¤åå­—é»˜è®¤ä¸ºç«¯å£å·+èŠå¤©å®¤
-        groupName = port + "å·èŠå¤©å®¤";
+        this.port = port;
+        //ÁÄÌìÊÒÃû×ÖÄ¬ÈÏÎª¶Ë¿ÚºÅ+ÁÄÌìÊÒ
+        groupName = port + "ºÅÁÄÌìÊÒ";
+        System.out.println("--------" + groupName + "--------");
     }
 
     @Override
     public void run() {
         try {
-            Thread.sleep(1000);
-
-            //åˆå§‹åŒ–å®¢æˆ·ç«¯è¿æ¥æ£€æµ‹çº¿ç¨‹ï¼Œå¹¶è®¾ç½®å›è°ƒï¼Œå½“æœ‰clientè¿æ¥æ—¶å‘socketsä¸­æ·»åŠ è¿æ¥åç”Ÿæˆçš„socket
-            AcceptThread acceptThread = new AcceptThread(this.serverSocket, s -> sockets.add(s));
-            //å¯åŠ¨å®¢æˆ·ç«¯è¿æ¥çº¿ç¨‹ï¼Œæ£€æµ‹å¹¶æ¥å—å®¢æˆ·ç«¯çš„è¿æ¥
-            new Thread(acceptThread).start();
-            //åˆå§‹åŒ–ç¼“å†²å­—ç¬¦è¾“å…¥ï¼Œæ£€æµ‹ä¸»ç”¨æˆ·(æˆ‘)çš„è¾“å…¥
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            //æ­»å¾ªç¯å‘æ‰€æœ‰è¿æ¥åˆ°æ­¤æœåŠ¡çš„clientå‘é€ä¿¡æ¯
+            //ËÀÑ­»·¼ì²âÊÇ·ñÓĞclientÁ¬½Ó
             while (true) {
-                String msg = in.readLine();
-                for (Socket socket : sockets) {
-                    PrintWriter out = new PrintWriter(socket.getOutputStream());
-                    if (socket.equals(this.socket)) {
-                        out.println("(ä½ )" + msg);
-                    } else {
-                        out.println(msg);
-                    }
+                try {
+                    Socket s = serverSocket.accept();
+                    //ÓĞclientÁ¬½ÓÊ±£¬»Øµ÷s£¬Ìí¼Óµ½·şÎñÏß³ÌµÄsocketsÖĞ
+                    sockets.add(s);
+                    //Æô¶¯ÏûÏ¢Ïß³Ì
+                    new Thread(new MsgHandler(s, this)).start();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -61,7 +53,17 @@ public class ServerThread extends Thread {
     }
 
     /**
-     * è®¾ç½®èŠå¤©å®¤çš„åå­—
+     * ·µ»ØÁÄÌìÊÒÃû×Ö
+     *
+     * @return
+     */
+    public String getGroupName() {
+        return groupName;
+    }
+
+    /**
+     * ÉèÖÃÁÄÌìÊÒµÄÃû×Ö
+     *
      * @param groupName
      */
     public void setGroupName(String groupName) {
@@ -69,49 +71,78 @@ public class ServerThread extends Thread {
     }
 
     /**
-     * è¿”å›èŠå¤©å®¤åå­—
+     * ·µ»Øµ±Ç°·şÎñ¶ËµÄ¶Ë¿ÚºÅ
+     *
+     * @return port
+     */
+    public int getPort() {
+        return port;
+    }
+
+    /**
+     * ´ÓsocketsÖĞÒÆ³ıÖ¸¶¨socket
+     *
+     * @param s
      * @return
      */
-    public String getGroupName(){
-        return groupName;
+    public boolean removeSocket(Socket s) {
+        return sockets.remove(s);
+    }
+
+    /**
+     * ·µ»ØÁ¬½Óµ½¸ÃserverµÄËùÓĞclient
+     *
+     * @return
+     */
+    public List<Socket> getSockets() {
+        return sockets;
     }
 }
 
 /**
- * å®¢æˆ·ç«¯è¿æ¥æ£€æµ‹çº¿ç¨‹
+ * µ¥¸öÏûÏ¢Ïß³Ì£¬ÎªÒ»¸öclient·şÎñ
  */
-class AcceptThread implements Runnable {
+class MsgHandler implements Runnable {
 
-    private ServerSocket serverSocket;
-    private AcceptCallback acceptCallback;
+    private Socket socket = null;
+    private BufferedReader in = null;
+    private ServerThread serverThread;
 
-    public AcceptThread(ServerSocket serverSocket, AcceptCallback acceptCallback) {
-        this.serverSocket = serverSocket;
-        this.acceptCallback = acceptCallback;
+    public MsgHandler(Socket socket, ServerThread serverThread) throws IOException {
+        this.serverThread = serverThread;
+        this.socket = socket;
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
     @Override
     public void run() {
-        //æ­»å¾ªç¯æ£€æµ‹æ˜¯å¦æœ‰clientè¿æ¥
-        while (true) {
-            try {
-                Socket s = serverSocket.accept();
-                //æœ‰clientè¿æ¥æ—¶ï¼Œå›è°ƒsï¼Œæ·»åŠ åˆ°æœåŠ¡çº¿ç¨‹çš„socketsä¸­
-                acceptCallback.addClient(s);
-            } catch (IOException e) {
-                e.printStackTrace();
+        try {
+            String msg = null;
+            while ((msg = readMsg()) != null) {
+                System.out.println(msg);
+                for (Socket s : serverThread.getSockets()) {
+                    PrintStream out = new PrintStream(s.getOutputStream());
+                    if (s == this.socket) {
+                        out.println(TimeUtils.getCurrentTime() + "(Äã):" + msg);
+                    } else {
+                        out.println(TimeUtils.getCurrentTime() + msg);
+                    }
+                }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
-}
 
-/**
- *
- */
-class Print implements Runnable{
-    @Override
-    public void run() {
-
+    private String readMsg() {
+        try {
+            return in.readLine();
+        }
+        //²¶»ñµ½Òì³££¬ËµÃ÷¸ÃSocket¶ÔÓ¦clientÒÑ¾­¹Ø±Õ
+        catch (IOException e) {
+            //É¾³ı¸ÃSocket
+            serverThread.removeSocket(socket);
+        }
+        return null;
     }
 }
-

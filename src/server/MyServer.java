@@ -1,51 +1,90 @@
 package server;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * @Author Hx
  * @Date 2022/5/17 20:41
  */
-public class MyServer {
+public class MyServer extends Thread {
 
-    //IP
-    public static final String IP = "127.0.0.1";
-    //ä¿å­˜æœåŠ¡çº¿ç¨‹
+    //±£´æ·şÎñÏß³Ì
     private ArrayList<ServerThread> serverThreads = new ArrayList<>();
-    //Port
-    private int PORT = 30000;
 
-    //éšè—æ„é€ å™¨
+    //Òş²Ø¹¹ÔìÆ÷
     private MyServer() {
     }
 
-    //è·å–å•ä¾‹MyServer
+    //»ñÈ¡µ¥ÀıMyServer
     public static MyServer getInstance() {
         return MyServerHolder.instance;
     }
 
-    //è¿”å›å½“å‰æœåŠ¡çº¿ç¨‹æ•°
+    public static void main(String[] args) throws IOException {
+        MyServer serverManager = MyServer.getInstance();
+//        serverManager.start();
+        ServerThread s = serverManager.createServerThread(30000);
+        new Thread(s).start();
+    }
+
+    @Override
+    public void run() {
+        super.run();
+        try {
+            //Ã¿ÈıÃë¼ì²âÒ»´ÎÊÇ·ñÓĞ·şÎñ¶ËÒÑ¾­ËÀÈ¥£¬Èç¹ûÓĞ£¬½«Æä´Ó·şÎñ³ØÖĞÒÆ³ı
+            Thread.sleep(3000);
+            serverThreads.removeIf(s -> !s.isAlive());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //·µ»Øµ±Ç°·şÎñÏß³ÌÊı
     public int ServerNum() {
         return serverThreads.size();
     }
 
-    //è¿”å›æ–°å¯ç”¨ç«¯å£
+    //·µ»ØĞÂ¿ÉÓÃ¶Ë¿Ú
     public int newPort() {
-        return PORT++;
+
+        while (true) {
+            boolean exist = false;
+            //¶¨ÒåÒ»¸ö·¶Î§ÔÚ30000~60000µÄ¶Ë¿ÚºÅ
+            int port = new Random().nextInt(60000) + 30000;
+            //±éÀú·şÎñ³Ø£¬²é¿´ÊÇ·ñÓĞÏàÍ¬µÄ¶Ë¿Ú
+            for (ServerThread s : serverThreads) {
+                if (s.getPort() == port) {
+                    exist = true;
+                    break;
+                }
+            }
+            if (!exist) return port;
+        }
     }
 
-    //å¢åŠ ä¸€ä¸ªæœåŠ¡çº¿ç¨‹
-    public boolean addServerThreads(ServerThread st) {
-        return serverThreads.add(st);
+    //´´½¨Ò»¸ö·şÎñ¶Ë£¬ÈôÒÑ´æÔÚÔò·µ»Ø£¬·ñÔòĞÂ½¨
+    public ServerThread createServerThread(int port) throws IOException {
+        for (ServerThread s : serverThreads) {
+            if (port == s.getPort())
+                return s;
+        }
+
+        ServerThread s = new ServerThread(port);
+        serverThreads.add(s);
+        return s;
     }
 
-    //ç”¨å†…éƒ¨é™æ€ç±»ç¼–è¯‘å‰æŒæœ‰MyServerç±»ï¼Œåˆ›å»ºæ—¶æ‰å®ä¾‹åŒ–
-    private static class MyServerHolder {
-        private final static MyServer instance = new MyServer();
-    }
-
-    //è¿”å›å½“å‰æœåŠ¡ç«¯æ•°ç»„
+    //·µ»Øµ±Ç°·şÎñ¶ËÊı×é
     public ArrayList<ServerThread> getServerThreads() {
         return serverThreads;
     }
+
+    //ÓÃÄÚ²¿¾²Ì¬Àà±àÒëÇ°³ÖÓĞMyServerÀà£¬´´½¨Ê±²ÅÊµÀı»¯
+    private static class MyServerHolder {
+        private final static MyServer instance = new MyServer();
+    }
 }
+
+
