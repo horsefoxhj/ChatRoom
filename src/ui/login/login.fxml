@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+<Pane id="login" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"
+      minWidth="-Infinity" prefHeight="415" prefWidth="540" stylesheets="@css/login.css"
+      xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1">
+
+    <!-- 操作栏；最小化、关闭 -->
+    <Pane id="operation" prefHeight="158" prefWidth="540">
+        <Label id="login_logo" layoutX="10" layoutY="5" prefHeight="15" prefWidth="200" style="-fx-text-fill:#666666;"
+               text="SuperChatRoom"/>
+        <Button id="btn_minimise" fx:id="minimise" layoutX="454" prefHeight="32" prefWidth="43" styleClass="min"/>
+        <Button id="btn_close" fx:id="close" layoutX="497" prefHeight="32" prefWidth="43" styleClass="close"/>
+    </Pane>
+
+    <!-- 头像 -->
+    <Pane id="headImg" layoutX="80" layoutY="200" prefHeight="100" prefWidth="100"/>
+
+    <TextField id="account" fx:id="account" layoutX="200" layoutY="200" prefHeight="45" prefWidth="250" promptText="账号">
+        <padding>
+            <Insets left="10"/>
+        </padding>
+    </TextField>
+
+    <PasswordField id="password" fx:id="password" layoutX="200" layoutY="255" prefHeight="45" prefWidth="250"
+                   promptText="密码">
+        <padding>
+            <Insets left="10"/>
+        </padding>
+    </PasswordField>
+
+    <Button id="btn_login" fx:id="btn_login" layoutX="200" layoutY="345" prefHeight="45" prefWidth="250"
+            styleClass="login_button" text="登 陆"/>
+
+    <Label id="slogan" layoutX="5" layoutY="398" prefHeight="15" prefWidth="400" text="v1.0 from Hx">
+        <font>
+            <Font size="12"/>
+        </font>
+    </Label>
+    <Label id="status" fx:id="status" layoutX="200.0" layoutY="306.0" prefHeight="32.0" prefWidth="250.0"/>
+</Pane>

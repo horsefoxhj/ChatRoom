@@ -25,7 +25,7 @@ import static javafx.geometry.HPos.RIGHT;
  * @Date 2022/5/24 0:53
  * @Describe
  */
-public class Launcher extends Application {
+public class Login extends Application {
     public static void main(String[] args) {
         launch(args);
     }
@@ -75,7 +75,6 @@ public class Launcher extends Application {
         grid.add(actionTarget, 0, 6);
         GridPane.setColumnSpan(actionTarget, 2);
         GridPane.setHalignment(actionTarget, RIGHT);
-
         btn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
