@@ -22,9 +22,9 @@ public class LoginDataSource {
                 user.setStatus(ONLINE);
                 return new Result.Success<>(user);
             } else
-                return new Result.Error(new Exception("登录失败，账号或密码错误!"));
+                return new Result.Error(new Exception("登录失败,账号或密码错误~"));
         } catch (Exception e) {
-            return new Result.Error(new IOException("登陆失败", e));
+            return new Result.Error(new IOException("登陆失败~", e));
         }
     }
 }

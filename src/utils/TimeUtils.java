@@ -11,7 +11,7 @@ import java.util.Date;
 public class TimeUtils {
     public static String getCurrentTime(){
         Date d = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd MM:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String date = sdf.format(d);
         return date;
     }
