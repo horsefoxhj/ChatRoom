@@ -9,11 +9,12 @@ import static base.Constants.OFFLINE;
  * @Date 2022/5/15 22:12
  */
 public class User {
-    int status;
-    int uid;
-    String name;
-    String account;
-    String password;
+    private int status;
+    private int uid;
+    private String name;
+    private String account;
+    private String password;
+    private String header;
 
     public User(int uid, String name, String account, String password) {
         this.status = OFFLINE;
@@ -21,9 +22,18 @@ public class User {
         this.name = name;
         this.account = account;
         this.password = password;
+        this.header = "header";
     }
 
     public User() {
+    }
+
+    public String getHeader() {
+        return header;
+    }
+
+    public void setHeader(String header) {
+        this.header = header;
     }
 
     public int getUid() {

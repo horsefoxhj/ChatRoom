@@ -10,15 +10,13 @@ import javafx.event.EventHandler;
  * @Date 2022/5/26 11:06
  * @Describe
  */
-public class LoginEventDefine {
+public class LoginEventDefine implements ILoginEvent {
     private Login login;
     private ILoginMethod loginMethod;
-    private ILoginEvent loginEvent;
 
-    public LoginEventDefine(Login login, ILoginEvent loginEvent, ILoginMethod loginMethod) {
+    public LoginEventDefine(Login login, ILoginMethod loginMethod) {
         this.login = login;
         this.loginMethod = loginMethod;
-        this.loginEvent = loginEvent;
         //设置窗口移动属性
         login.move();
         //窗口最小化
@@ -47,8 +45,8 @@ public class LoginEventDefine {
     }
 
     //绑定登录事件
+    @Override
     public void doLogin() {
-
         login.btn_login.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {

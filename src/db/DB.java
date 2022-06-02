@@ -3,22 +3,30 @@ package db;
 import entity.User;
 
 import java.sql.*;
+import java.util.ArrayList;
 
 /**
  * @Author Hx
  * @Date 2022/5/23 18:37
- * @Describe
+ * @Describe 数据库操作类
  */
 public class DB {
-
+    //MySQL驱动
     private final static String DRIVER = "com.mysql.cj.jdbc.Driver";
     private final static int SUCCESS = 1;
     private final static int ERROR = 0;
+    //待接受的好友
+    private final static int PENDING = 1;
+    //已接受的好友
+    private final static int ACCEPTED = 2;
     private Connection conn;
     private boolean driverLoaded = false;
     private boolean isInit = false;
     private boolean isConnected = false;
     private PreparedStatement insertRecord;
+    private PreparedStatement queryUsers;
+    private PreparedStatement queryRoom;
+    private PreparedStatement queryFriends;
 
     private DB() {
         init();
@@ -88,82 +96,93 @@ public class DB {
             Statement statement = conn.createStatement();
             //选择数据库chatroom
             statement.execute("use chatroom");
+            //创建用户表
+            statement.execute("create table if not exists user(" +
+                    "uid int not null, " +
+                    "name varchar(10) not null, " +
+                    "account  varchar(10) not null, " +
+                    "password varchar(10) not null," +
+                    "head varchar(10) default 'header')");
 
-            if (!isTableExists("user")) {
-
-                //创建用户表
-                statement.execute("create table user(" +
-                        "uid int not null, " +
-                        "name varchar(10) not null, " +
-                        "account  varchar(10) not null, " +
-                        "password varchar(10) not null)");
-
-                //初始化用户
-                User[] users = {
-                        new User(1127, "小何", "123456", "123456"),
-                        new User(1225, "小潘", "654321", "654321"),
-                        new User(510, "小谢", "111111", "111111"),
-                        new User(1124, "小林", "222222", "222222"),
-                        new User(717, "小川", "101010", "101010"),
-                        new User(53, "小辜", "666666", "666666"),
-                };
-                insertUser(users);
-                System.out.println("user表创建成功~");
-            } else System.out.println("user表已存在~");
+            statement.execute("truncate table user");
+            //初始化用户
+            User[] users = {
+                    new User(1127, "小何", "123456", "123456"),
+                    new User(1225, "小潘", "654321", "654321"),
+                    new User(510, "小谢", "111111", "111111"),
+                    new User(1124, "小林", "222222", "222222"),
+                    new User(717, "小川", "101010", "101010"),
+                    new User(53, "小辜", "666666", "666666"),
+            };
+            insertUser(users);
+            System.out.println("user表初始化成功~");
 
             //创建好友关系表
-//            if (!isTableExists("Friends")) {
-//
-//                statement.execute("create table friends(" +
-//                        "uid int not null," +
-//                        "friend_uid int not null)");
-//                System.out.println("friends表创建成功~");
-//            } else System.out.println("friends表已存在~");
+            statement.execute("create table if not exists friends(" +
+                    "uid int not null," +
+                    "friend_uid int not null," +
+                    "status int not null);");
+            System.out.println("friends表初始化成功~");
 
             //创建聊天室信息表
-//            if (!isTableExists("Group")) {
-//                statement.execute("create table `group`(" +
-//                        "    group_id int not null," +
-//                        "    uid      int not null)");
-//                System.out.println("group表创建成功~");
-//            } else System.out.println("group表已存在~");
+            statement.execute("create table if not exists roomInfo(" +
+                    "room_id int not null auto_increment primary key," +
+                    "header  varchar(10) default 'header'," +
+                    "port    int not null)auto_increment=1;");
+            System.out.println("room表初始化成功~");
+
+            //创建聊天室关系表
+            statement.execute("create table if not exists room(" +
+                    "room_id int not null," +
+                    "uid     int not null," +
+                    "port    int not null);");
+            //关联聊天室关系表和聊天室信息表
+            statement.execute("alter table room " +
+                    "add constraint room_roominfo_room_id_fk " +
+                    "foreign key (room_id) references roominfo (room_id)" +
+                    "on update cascade on delete cascade;");
+            System.out.println("room表初始化成功~");
 
             //创建聊天记录表
-//            if (!isTableExists("Record")) {
-//                statement.execute("create table record(" +
-//                        "group_id    int default 0 not null," +
-//                        "timestamp   timestamp     not null," +
-//                        "uid         int           not null," +
-//                        "text        text          not null);");
-//                System.out.println("record表创建成功~");
-//            } else System.out.println("record表已存在~");
+            statement.execute("create table if not exists record(" +
+                    "room_id     int default 0 not null," +
+                    "timestamp   timestamp     not null," +
+                    "uid         int           not null," +
+                    "text        text          not null);");
+            //关联记录表和聊天室信息表
+            statement.execute("alter table record " +
+                    "add constraint record_roominfo_room_id_fk " +
+                    "foreign key (room_id) references roominfo (room_id)" +
+                    "on update cascade on delete cascade;");
+            System.out.println("record表初始化成功~");
 
-//            insertRecord =
-//                    conn.prepareStatement("insert into record(group_id,timestamp,uid,text) value (?,?,?,?)");
+            insertRecord =
+                    conn.prepareStatement("insert into record(room_id,timestamp,uid,text) value (?,?,?,?)");
+            queryUsers = conn.prepareStatement("select * from user");
+            queryUsers = conn.prepareStatement("select * from friends");
+            queryRoom = conn.prepareStatement("select * from room");
             isInit = true;
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println(e.getMessage());
         }
     }
 
     /**
-     * 查询用户数据
+     * 登录
      *
      * @param account
      * @param password
      * @return
      */
-    public User queryUser(String account, String password) {
+    public User login(String account, String password) {
 
         User user = new User();
         try {
-            getConnection();
-            PreparedStatement sql = conn.prepareStatement("select * from user");
-            ResultSet res = sql.executeQuery();
+            ResultSet res = queryUsers.executeQuery();
             while (res.next()) {
                 if (res.getString("account").equals(account)
                         && res.getString("password").equals(password)) {
-
                     user.setAccount(account);
                     user.setPassword(password);
                     user.setName(res.getString("name"));
@@ -175,6 +194,76 @@ public class DB {
             System.out.println("查询失败");
         }
         return null;
+    }
+
+    /**
+     * 查询传入uid对应用户的所有待添加好友
+     *
+     * @param uid
+     * @return
+     */
+    public ArrayList<User> getNewFriends(int uid) {
+        ArrayList<User> arrayList = new ArrayList<>();
+        try {
+
+            ResultSet friends = queryFriends.executeQuery();
+            ResultSet users = queryUsers.executeQuery();
+            //循环查找所有待添加好友
+            while (friends.next()) {
+                if (friends.getInt("uid") == uid && friends.getInt("status") == PENDING) {
+                    int friends_id = friends.getInt("friend_uid");
+                    while (users.next()) {
+                        if (users.getInt("uid") == friends_id) {
+                            queryUserById(users.getInt("uid"));
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("查询失败");
+        }
+        return arrayList;
+    }
+
+    /**
+     * 根据uid查询用户
+     *
+     * @param uid
+     * @return
+     */
+    public User queryUserById(int uid) {
+        try {
+            ResultSet res = queryUsers.executeQuery();
+            while (res.next()) {
+                if (res.getInt("uid") == uid) {
+                    return new User(res.getInt("uid"),
+                            res.getString("name"),
+                            res.getString("account"),
+                            res.getString("password"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("查询用户失败~");
+        }
+        return null;
+    }
+
+    public ArrayList<Integer> queryRoomByUid(int uid) {
+        ArrayList<Integer> integers = new ArrayList<>();
+        try {
+            ResultSet res = queryRoom.executeQuery();
+            while (res.next()) {
+                if (res.getInt("uid") == uid) {
+                    integers.add(res.getInt("room_id"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("查询聊天室失败~");
+        }
+        return integers;
     }
 
     /**
@@ -224,7 +313,7 @@ public class DB {
     private void insertFriendship(int uid, int friends_uid) throws SQLException {
         getConnection();
         PreparedStatement sql
-                = conn.prepareStatement("insert into friends(uid,friends_uid) value (?,?)");
+                = conn.prepareStatement("insert into friends(uid,friend_uid) value (?,?)");
 
         sql.setInt(1, uid);
         sql.setInt(2, friends_uid);

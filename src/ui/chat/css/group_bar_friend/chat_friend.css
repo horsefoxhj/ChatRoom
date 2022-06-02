@@ -1,6 +1,6 @@
 @import "chat_friend_group.css";
-@import "chat_friend_luck.css";
-@import "chat_friend_user.css";
+@import "chat_friend_new.css";
+@import "chat_friend_list.css";
 
 #friend {
     -fx-border-width: 0;
@@ -69,14 +69,14 @@
     -fx-padding: 0;
 }
 
-.elementFriendLuck, .elementFriendSubscription {
+.newFriend_Tag, .elementFriendSubscription {
     -fx-background-color: transparent;
     -fx-text-fill: black;
     -fx-border-width: 0 0 1px 0;
     -fx-border-color: derive(#c7c6c6, 10%);
 }
 
-.elementFriendLuck_head, .elementFriendSubscription_head, .elementFriendGroup_head, .elementFriendUser_head {
+.newFriendTag_head, .elementFriendSubscription_head, .elementFriendGroup_head, .elementFriendUser_head {
     -fx-background-position: center center;
     -fx-background-repeat: no-repeat;
     -fx-background-size: 50px 50px;
@@ -86,15 +86,15 @@
     -fx-border-radius: 2px;
 }
 
-.elementFriendLuck_head {
-    -fx-background-image: url("../../img/friend_luck_50.png");
+.newFriendTag_head {
+    -fx-background-image: url("file:src/ui/chat/img/icon_newfriend.png");
 }
 
 .elementFriendSubscription_head {
     -fx-background-image: url("../../img/friend_group_50.png");
 }
 
-.elementFriendLuck_name, .elementFriendSubscription_name, .elementFriendGroup_name, .elementFriendUser_name {
+.newFriendTag_name, .elementFriendSubscription_name, .elementFriendGroup_name, .elementFriendUser_name {
     -fx-font-family: "微软雅黑";
     -fx-text-fill: #000000;
     -fx-font-size: 18px;
@@ -104,7 +104,7 @@
     -fx-text-align: left;
 }
 
-.element_friend_tag {
+.friendList_tag {
     -fx-background-radius: 0px;
     -fx-background-color: transparent;
     -fx-border-color: transparent;

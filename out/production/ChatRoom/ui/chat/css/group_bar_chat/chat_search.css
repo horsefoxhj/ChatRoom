@@ -14,14 +14,14 @@
     -fx-background-position: 0px center;
 }
 
-#searchInput:focused {
+.searchInput:focused {
     -fx-border-width: 2;
     -fx-border-color: #dbd9d8;
     -fx-border-radius: 8px;
     -fx-background-color: #f6f6f5;
 }
 
-#searchAdd {
+.searchAdd {
     -fx-background-color: #dbd9d8;
     -fx-border-width: 1px;
     -fx-border-radius: 5px;
@@ -31,7 +31,7 @@
     -fx-background-image: url("../../img/add_0.png");
 }
 
-#searchAdd:hover {
+.searchAdd:hover {
     -fx-background-color: #d1d1d1;
     -fx-border-color: #d1d1d1;
 }

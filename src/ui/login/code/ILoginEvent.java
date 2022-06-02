@@ -11,5 +11,5 @@ public interface ILoginEvent {
      * @param userId        用户ID
      * @param userPassword  用户密码
      */
-    void doLogin(String userId, String userPassword);
+    void doLogin();
 }

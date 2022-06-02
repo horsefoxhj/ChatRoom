@@ -62,20 +62,20 @@
     -fx-font-weight: bold;
 }
 
-.talkElement{
+.talkListItem_Pane{
     -fx-background-color:transparent;
     -fx-text-fill:black;
 }
 
-.element_head{
+.talkListItem_head{
     -fx-background-position: center center;
     -fx-background-repeat: no-repeat;
     -fx-background-size: 50px 50px;
     -fx-background-color: white;
-    -fx-background-image: url("../../img/system/head_default_5050.png");
+    -fx-background-image: url("file:src/ui/chat/img/header.png");
 }
 
-.element_nikeName{
+.talkListItem_name{
     /*-fx-background-color: red;*/
     -fx-font-family: "微软雅黑";
     -fx-text-fill: #000000;
@@ -86,7 +86,7 @@
     -fx-text-align: left;
 }
 
-.element_msgSketch{
+.talkListItem_msgSketch{
    /*-fx-background-color: yellow;*/
    -fx-font-family: "微软雅黑";
    -fx-text-fill: #999999;
@@ -97,7 +97,7 @@
    -fx-text-align: left;
 }
 
-.element_msgData{
+.talkListItem_msgData{
    /*-fx-background-color: blue;*/
    -fx-font-family: "微软雅黑";
    -fx-text-fill: #999999;
@@ -108,7 +108,7 @@
    -fx-alignment: center-right;
 }
 
-.element_msgRemind{
+.talkListItem_msgRemind{
    -fx-background-color: red;
    -fx-border-width: 1px;
    -fx-border-radius: 100px;
@@ -120,11 +120,11 @@
    -fx-alignment: center; 
 }
 
-.element_delete{
+.talkListItem_delete{
    -fx-background-color:transparent;
    -fx-cursor: hand;
    -fx-border-width: 0;
-   -fx-background-image: url("../../img/talk_delete.png");
+   -fx-background-image: url("file:src/ui/chat/img/talk_delete.png");
    -fx-background-position: center center;
    -fx-background-repeat: no-repeat;
 }

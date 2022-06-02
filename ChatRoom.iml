@@ -7,8 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="lib" level="project" />
-    <orderEntry type="library" name="javafx" level="application" />
     <orderEntry type="library" name="scenebuilder-kit-17.0.0" level="application" />
+    <orderEntry type="library" name="javafx-sdk-17.0" level="application" />
+    <orderEntry type="library" name="mysql-connector-java-8.0.29 (2)" level="project" />
+    <orderEntry type="library" name="scenebuilder-kit-17.0.0 (2)" level="project" />
   </component>
 </module>

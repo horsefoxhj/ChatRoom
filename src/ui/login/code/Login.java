@@ -25,7 +25,6 @@ public abstract class Login extends UIParent {
     public Button btn_minimise;
     public Button btn_close;
     public Label status;
-    protected ILoginEvent loginEvent;
 
     public Login() throws IOException {
         root = FXMLLoader.load(getClass().getClassLoader().getResource("ui/login/login.fxml"));
@@ -34,7 +33,6 @@ public abstract class Login extends UIParent {
         setScene(scene);
         initStyle(StageStyle.TRANSPARENT);
         setResizable(false);
-
         //绑定UI
         bindUI();
         //初始化事件

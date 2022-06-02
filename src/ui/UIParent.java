@@ -48,7 +48,7 @@ public abstract class UIParent extends Stage {
     }
 
     //»ñÈ¡UI¿Ø¼þ
-    public  <T> T $(String id, Class<T> clazz) {
+    public <T> T $(String id, Class<T> clazz) {
         return (T) root.lookup("#" + id);
     }
 
