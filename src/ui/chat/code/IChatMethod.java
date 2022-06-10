@@ -1,6 +1,7 @@
 package ui.chat.code;
 
-import java.util.Date;
+import entity.Message;
+import entity.RoomInfo;
 
 public interface IChatMethod {
 
@@ -11,39 +12,22 @@ public interface IChatMethod {
     void doShow();
 
     /**
-     * 设置登陆用户头像
      *
-     * @param userId       用户ID
-     * @param userNickName 用户昵称
-     * @param userHead     头像图片名称
+     * @param position 对话框位置；首位0、默认-1
+     * @param roomInfo 聊天室信息
+     * @param selected 选中[true/false]
      */
-    void setUserInfo(String userId, String userNickName, String userHead);
+    void addTalkBox(int position, RoomInfo roomInfo, Boolean selected);
 
     /**
-     * 填充对话框列表
+     * 填充对话框消息-好友[别人的消息]
      *
-     * @param position    对话框位置；首位0、默认-1
-     * @param roomId     对话框ID
-     * @param roomName   对话框名称
-     * @param talkHead   对话框头像
-     * @param talkSketch 聊天内容最后一组信息
-     * @param talkDate   对话框通信时间
-     * @param selected   选中[true/false]
+     * @param message 消息
+     * @param idxFirst 是否设置首位
+     * @param selected 是否选中
+     * @param isRemind 是否提醒
      */
-    void addTalkBox(int position, int roomId, String roomName, String talkHead, String talkSketch, Date talkDate, Boolean selected);
-//
-//    /**
-//     * 填充对话框消息-好友[别人的消息]
-//     *
-//     * @param talkId   对话框ID[用户ID]
-//     * @param msg      消息
-//     * @param msgType  消息类型；0文字消息、1固定表情
-//     * @param msgData  时间
-//     * @param idxFirst 是否设置首位
-//     * @param selected 是否选中
-//     * @param isRemind 是否提醒
-//     */
-//    void addTalkMsgUserLeft(String talkId, String msg, Integer msgType, Date msgData, Boolean idxFirst, Boolean selected, Boolean isRemind);
+    void addTalkMsgLeft(Message message, Boolean idxFirst, Boolean selected, Boolean isRemind);
 
 //    /**
 //     * 填充对话框消息-群组[别人的消息]
@@ -61,18 +45,15 @@ public interface IChatMethod {
 //     */
 //    void addTalkMsgGroupLeft(String talkId, String userId, String userNickName, String userHead, String msg, Integer msgType, Date msgDate, Boolean idxFirst, Boolean selected, Boolean isRemind);
 
+
     /**
      * 填充对话框消息[自己的消息]
-     *
-     * @param talkId   对话框ID[用户ID]
-     * @param msg      消息
-     * @param msgType  消息类型；0文字消息、1固定表情
-     * @param msgData  时间
+     * @param message 消息
      * @param idxFirst 是否设置首位
      * @param selected 是否选中
      * @param isRemind 是否提醒
      */
-    void addTalkMsgRight(String talkId, String msg, Integer msgType, Date msgData, Boolean idxFirst, Boolean selected, Boolean isRemind);
+    void addTalkMsgRight(Message message, Boolean idxFirst, Boolean selected, Boolean isRemind);
 
 //    /**
 //     * 好友列表添加‘群组’
@@ -87,11 +68,11 @@ public interface IChatMethod {
      * 好友列表添加‘用户’
      *
      * @param selected     选中;true/false
-     * @param userId       好友ID
-     * @param userNickName 好友昵称
-     * @param userHead     好友头像
+     * @param friendId       好友ID
+     * @param friendName 好友昵称
+     * @param header     好友头像
      */
-    void addFriendUser(boolean selected, String userId, String userNickName, String userHead);
+    void addFriendUser(boolean selected, int friendId, String friendName, String header);
 
     /**
      * 添加好友
@@ -101,7 +82,7 @@ public interface IChatMethod {
      * @param userHead     好友头像
      * @param status       状态；0添加、1允许、2已添加
      */
-    void addNewFriend(String userId, String userNickName, String userHead, Integer status);
+    void addNewFriend(int userId, String userNickName, String userHead, Integer status);
 
 //    /**
 //     * 工具栏表情框体，位置：X

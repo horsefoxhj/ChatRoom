@@ -1,87 +1,123 @@
 package base.client;
 
+import base.Constants;
+import entity.Message;
+import javafx.application.Platform;
+import ui.util.CacheUtil;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import static utils.JsonUtils.Str2Msg;
+
 /**
  * @Author Hx
  * @Date 2022/5/17 20:17
  */
-public class ClientThread implements Runnable {
+public class ClientThread extends Thread {
 
     //该线程负责的Socket
     private final Socket socket;
-    //字符输入
-    BufferedReader in;
-    //该Client的名字
-    private String client_name;
+    //该Client的所有者的uid
+    private final int uid;
+    //该Client连接的服务端的id
+    private final int roomId;
+    //发送的消息
+    private String msg_send;
+    //是否发送消息
+    private boolean isSend = false;
 
     //构造器
-    public ClientThread(String ip, int port, String name) throws IOException {
-        socket = new Socket(ip, port);
-        client_name = name;
-        in = new BufferedReader(new InputStreamReader(System.in));
+    public ClientThread(int port, int uid, int roomId) throws IOException {
+        socket = new Socket(Constants.IP_DEFAULT, port);
+        this.roomId = roomId;
+        this.uid = uid;
+        System.out.println("启动ClientThread,roomId = " + roomId + "port = " + port);
+        //启动线程
+        start();
     }
 
     @Override
     public void run() {
         try {
-            Thread.sleep(1000);
-            //启动消息接受线程
-            new Thread(new MsgInput(socket)).start();
+            //启动消息线程
+            new Thread(new MsgHandler(socket)).start();
             PrintWriter out = new PrintWriter(socket.getOutputStream());
-            out.println(client_name + "加入聊天室");
-            out.flush();
-            String msg;
-            //死循环接受信息
-            while ((msg = in.readLine()) != null) {
-                out.println(client_name + "说：" + msg);
-                out.flush();
+            //死循环接受客户端消息
+            while (true) {
+                if (isSend) {
+                    //向服务端发出消息
+                    out.println(msg_send);
+                    out.flush();
+                    isSend = false;
+                }
+                Thread.sleep(500);
             }
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
     }
 
-    //获取client名字
-    public String getClient_name() {
-        return client_name;
+    /**
+     * 向服务端发送消息
+     *
+     * @param msg 消息
+     */
+    public void sendMsg(String msg) {
+        this.msg_send = msg;
+        isSend = true;
     }
 
-    //设置client名字
-    public void setClient_name(String client_name) {
-        this.client_name = client_name;
+    //获取连接聊天室的ID
+    public int getRoomId() {
+        return roomId;
     }
 
-    //返回当前客户端线程的Socket
-    public Socket getSocket() {
-        return socket;
-    }
-}
+    /**
+     * 消息线程，接受来自服务端的消息
+     */
+    class MsgHandler implements Runnable {
 
-class MsgInput implements Runnable {
+        private final BufferedReader in;
+        //接受的消息
+        private String msg_received;
 
-    BufferedReader out;
-    private final Socket s;
+        public MsgHandler(Socket socket) throws IOException {
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        }
 
-    public MsgInput(Socket s) throws IOException {
-        this.s = s;
-        out = new BufferedReader(new InputStreamReader(s.getInputStream()));
-    }
-
-    @Override
-    public void run() {
-        try {
-            String msg = null;
-            while ((msg = out.readLine()) != null) {
-                System.out.println(msg);
+        @Override
+        public void run() {
+            //死循环获取服务端消息
+            while ((msg_received = readMsg()) != null) {
+                Message message = Str2Msg(msg_received);
+                //换到fx线程，更新ui
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        CacheUtil.chatController.addTalkMsgLeft(message, false, false, true);
+                    }
+                });
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        }
+
+        /**
+         * 读取客户端消息
+         */
+        private String readMsg() {
+            try {
+                return in.readLine();
+            }
+            //捕获到异常，说明该Socket对应client已经关闭
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
         }
     }
 }
+
 

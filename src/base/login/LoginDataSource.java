@@ -21,8 +21,8 @@ public class LoginDataSource {
             //登录成功
             if (user != null) {
                 user.setStatus(ONLINE);
-                //TODO:数据库中更新用户状态为在线
-
+                //数据库中更新用户状态为在线状态
+                db.setUserOnline(user.getUid(), true);
                 return new Result.Success<>(user);
             } else
                 return new Result.Error(new Exception("登录失败,账号或密码错误~"));

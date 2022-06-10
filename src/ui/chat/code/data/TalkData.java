@@ -5,30 +5,30 @@ package ui.chat.code.data;
  */
 public class TalkData {
 
-    private String talkName;
-    private String talkHead;
+    private String roomName;
+    private String roomHeader;
 
     public TalkData(){}
 
-    public TalkData(String talkName, String talkHead) {
-        this.talkName = talkName;
-        this.talkHead = talkHead;
+    public TalkData(String roomName, String talkHead) {
+        this.roomName = roomName;
+        this.roomHeader = talkHead;
     }
 
-    public String getTalkName() {
-        return talkName;
+    public String getRoomName() {
+        return roomName;
     }
 
-    public void setTalkName(String talkName) {
-        this.talkName = talkName;
+    public void setRoomName(String roomName) {
+        this.roomName = roomName;
     }
 
-    public String getTalkHead() {
-        return talkHead;
+    public String getRoomHeader() {
+        return roomHeader;
     }
 
-    public void setTalkHead(String talkHead) {
-        this.talkHead = talkHead;
+    public void setRoomHeader(String roomHeader) {
+        this.roomHeader = roomHeader;
     }
 
 }

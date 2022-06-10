@@ -3,40 +3,38 @@ package ui.chat.code.data;
 
 public class TalkBoxData {
 
-    private int talkId;    // 对话Id
-    private String talkName;  // 对话名称
-    private String talkHead;  // 对话头像
+    private int roomId;    // 对话Id
+    private String roomName;  // 对话名称
+    private String roomHeader;  // 对话头像
+    private Integer talkType; // 对话类型
 
-    public TalkBoxData() {
+    public TalkBoxData(int roomId, String talkName, String talkHead) {
+        this.roomId = roomId;
+        this.roomName = talkName;
+        this.roomHeader = talkHead;
     }
 
-    public TalkBoxData(int talkId, String talkName, String talkHead) {
-        this.talkId = talkId;
-        this.talkName = talkName;
-        this.talkHead = talkHead;
+    public int getRoomId() {
+        return roomId;
     }
 
-    public int getTalkId() {
-        return talkId;
+    public void setRoomId(int roomId) {
+        this.roomId = roomId;
     }
 
-    public void setTalkId(int talkId) {
-        this.talkId = talkId;
+    public String getRoomName() {
+        return roomName;
     }
 
-    public String getTalkName() {
-        return talkName;
+    public void setRoomName(String roomName) {
+        this.roomName = roomName;
     }
 
-    public void setTalkName(String talkName) {
-        this.talkName = talkName;
+    public String getRoomHeader() {
+        return roomHeader;
     }
 
-    public String getTalkHead() {
-        return talkHead;
-    }
-
-    public void setTalkHead(String talkHead) {
-        this.talkHead = talkHead;
+    public void setRoomHeader(String roomHeader) {
+        this.roomHeader = roomHeader;
     }
 }

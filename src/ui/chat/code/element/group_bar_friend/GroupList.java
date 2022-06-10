@@ -9,12 +9,12 @@ import javafx.scene.layout.Pane;
 /**
  * 组件；群组
  */
-public class ElementFriendGroupList {
+public class GroupList {
 
     private Pane pane;
     private ListView<Pane> groupListView; // 群组列表
 
-    public ElementFriendGroupList() {
+    public GroupList() {
         pane = new Pane();
         pane.setId("friendGroupList");
         pane.setPrefWidth(314);

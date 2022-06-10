@@ -1,13 +1,20 @@
 package base.server;
 
-import utils.TimeUtils;
+import db.DB;
+import entity.Message;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static utils.JsonUtils.Str2Msg;
 
 /**
  * @Author Hx
@@ -16,58 +23,38 @@ import java.util.List;
 public class ServerThread extends Thread {
 
     private final int port;
+    //当前聊天室的ServerSocket
+    private final ServerSocket serverSocket;
+    //当前聊天室的id
+    public int roomId;
     //保存连接到该服务线程的Client的socket;
     private volatile List<Socket> sockets;
-    //当前聊天室的端口
-    private ServerSocket serverSocket;
-    //当前聊天室的名字
-    private String groupName;
 
-    public ServerThread(int port) throws IOException {
+    public ServerThread(int port, int roomId) throws IOException {
         sockets = Collections.synchronizedList(new ArrayList<>());
         serverSocket = new ServerSocket(port);
         this.port = port;
-        //聊天室名字默认为端口号+聊天室
-        groupName = port + "号聊天室";
-        System.out.println("--------" + groupName + "--------");
+        this.roomId = roomId;
+        System.out.println("启动ServerThread,port = " + port + " roomId = " + roomId);
+        start();
     }
 
     @Override
     public void run() {
-        try {
-            //死循环检测是否有client连接
-            while (true) {
-                try {
-                    Socket s = serverSocket.accept();
-                    //有client连接时，回调s，添加到服务线程的sockets中
-                    sockets.add(s);
-                    //启动消息线程
-                    new Thread(new MsgHandler(s, this)).start();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        //死循环检测是否有client连接
+        while (true) {
+            try {
+                Socket s = serverSocket.accept();
+                //有client连接时，添加到服务线程的sockets中
+                sockets.add(s);
+                System.out.println("Client连接到" + s.getPort());
+                System.out.println("roomId:" + roomId + " port:" + port + " client:" + sockets.size());
+                //启动消息线程
+                new Thread(new MsgHandler(s, this)).start();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-    }
-
-    /**
-     * 返回聊天室名字
-     *
-     * @return
-     */
-    public String getGroupName() {
-        return groupName;
-    }
-
-    /**
-     * 设置聊天室的名字
-     *
-     * @param groupName
-     */
-    public void setGroupName(String groupName) {
-        this.groupName = groupName;
     }
 
     /**
@@ -80,10 +67,16 @@ public class ServerThread extends Thread {
     }
 
     /**
-     * 从sockets中移除指定socket
+     * 返回当前服务器对应的聊天室id
      *
-     * @param s
-     * @return
+     * @return roomId
+     */
+    public int getRoomId() {
+        return roomId;
+    }
+
+    /**
+     * 从sockets中移除指定socket
      */
     public boolean removeSocket(Socket s) {
         return sockets.remove(s);
@@ -91,8 +84,6 @@ public class ServerThread extends Thread {
 
     /**
      * 返回连接到该server的所有client
-     *
-     * @return
      */
     public List<Socket> getSockets() {
         return sockets;
@@ -100,13 +91,13 @@ public class ServerThread extends Thread {
 }
 
 /**
- * 单个消息线程，为一个client服务
+ * 消息线程，接受单个客户端发来的消息并向所有客户端广播
  */
 class MsgHandler implements Runnable {
 
-    private Socket socket = null;
-    private BufferedReader in = null;
-    private ServerThread serverThread;
+    private final Socket socket;
+    private final BufferedReader in;
+    private final ServerThread serverThread;
 
     public MsgHandler(Socket socket, ServerThread serverThread) throws IOException {
         this.serverThread = serverThread;
@@ -116,24 +107,34 @@ class MsgHandler implements Runnable {
 
     @Override
     public void run() {
-        try {
-            String msg = null;
-            while ((msg = readMsg()) != null) {
+        String msg;
+
+        while ((msg = readMsg()) != null) {
+            try {
                 System.out.println(msg);
-                for (Socket s : serverThread.getSockets()) {
-                    PrintStream out = new PrintStream(s.getOutputStream());
-                    if (s == this.socket) {
-                        out.println(TimeUtils.getCurrentTime() + "(你):" + msg);
-                    } else {
-                        out.println(TimeUtils.getCurrentTime() + msg);
-                    }
+                Message message = Str2Msg(msg);
+                System.out.println("收到Id为" + message.uid + "的消息：" + message.text);
+                //向所有客户端广播
+                List<Socket> sockets = serverThread.getSockets();
+                for (Socket s : sockets) {
+                    PrintWriter out = new PrintWriter(s.getOutputStream());
+                        if (s != this.socket) {
+                            out.println(msg);
+                            out.flush();
+                        }
                 }
+
+                DB db = DB.getInstance();
+                db.insertRecord(serverThread.roomId, message.uid, message.text);
+            } catch (IOException | SQLException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
+    /**
+     * 读取客户端消息
+     */
     private String readMsg() {
         try {
             return in.readLine();
@@ -142,6 +143,7 @@ class MsgHandler implements Runnable {
         catch (IOException e) {
             //删除该Socket
             serverThread.removeSocket(socket);
+            System.out.println("客户端" + socket.getPort() + "断开");
         }
         return null;
     }

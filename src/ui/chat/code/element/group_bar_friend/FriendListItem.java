@@ -12,10 +12,10 @@ public class FriendListItem {
     private Label headLabel;  // 头像区域
     private Label nameLabel;  // 名称区域
 
-    public FriendListItem(String userId, String userNickName, String userHead){
+    public FriendListItem(int userId, String userName, String userHead) {
         // 用户底板(存储用户ID)
         pane = new Pane();
-        pane.setId(userId);
+        pane.setId(userId + "");
         pane.setPrefWidth(250);
         pane.setPrefHeight(70);
         pane.getStyleClass().add("elementFriendUser");
@@ -33,7 +33,7 @@ public class FriendListItem {
         nameLabel.setPrefSize(200, 40);
         nameLabel.setLayoutX(80);
         nameLabel.setLayoutY(15);
-        nameLabel.setText(userNickName);
+        nameLabel.setText(userName);
         nameLabel.getStyleClass().add("elementFriendUser_name");
         children.add(nameLabel);
     }

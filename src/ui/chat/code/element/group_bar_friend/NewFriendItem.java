@@ -25,7 +25,7 @@ public class NewFriendItem {
      * @param userHead     ÓÃ»§Í·Ïñ
      * @param status       ×´Ì¬£»0/1
      */
-    public NewFriendItem(String userId, String userNickName, String userHead, Integer status) {
+    public NewFriendItem(int userId, String userNickName, String userHead, Integer status) {
         pane = new Pane();
         pane.setUserData(userId);
         pane.setPrefWidth(250);
@@ -56,7 +56,7 @@ public class NewFriendItem {
         idLabel.setPrefSize(200, 20);
         idLabel.setLayoutX(190);
         idLabel.setLayoutY(40);
-        idLabel.setText(userId);
+        idLabel.setText(String.valueOf(userId));
         idLabel.getStyleClass().add("newFriendItem_id");
         children.add(idLabel);
 

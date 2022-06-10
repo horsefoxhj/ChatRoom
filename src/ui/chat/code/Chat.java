@@ -16,11 +16,11 @@ import java.io.IOException;
 public abstract class Chat extends UIParent {
 
     // 用户ID
-    public String userId;
+    public int userId;
     // 用户昵称
-    public String userNickName;
+    public String userName;
     // 用户头像
-    public String userHead;
+    public String userHeader;
     // 输入框
     public TextArea txt_input;
     //最小化
@@ -43,7 +43,10 @@ public abstract class Chat extends UIParent {
     //聊天列表
     public ListView talkList;
 
-    Chat() throws IOException {
+    Chat(int userId, String userName, String header) throws IOException {
+        this.userId = userId;
+        this.userName = userName;
+        this.userHeader = header;
         root = FXMLLoader.load(getClass().getClassLoader().getResource("ui/chat/chat.fxml"));
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);

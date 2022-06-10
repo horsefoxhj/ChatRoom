@@ -1,5 +1,6 @@
 package ui.chat.code.element.group_bar_chat;
 
+import entity.RoomInfo;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -29,10 +30,10 @@ public class TalkListItem {
 
     private ListView<Pane> infoBoxList; // 初始化填充消息对话框
 
-    public TalkListItem(int talkId, String talkName, String talkHead, String talkSketch, Date talkDate) {
+    public TalkListItem(RoomInfo roomInfo) {
         pane = new Pane();
-        pane.setId(Ids.TalkListId.createTalkPaneId(talkId));
-        pane.setUserData(new TalkBoxData(talkId, talkName, talkHead));
+        pane.setId(Ids.TalkListId.createTalkPaneId(roomInfo.roomId));
+        pane.setUserData(new TalkBoxData(roomInfo.roomId, roomInfo.roomName, roomInfo.header));
         pane.setPrefSize(270, 80);
         pane.getStyleClass().add("talkListItem_Pane");
         ObservableList<Node> children = pane.getChildren();
@@ -43,7 +44,7 @@ public class TalkListItem {
         head.setLayoutX(15);
         head.setLayoutY(15);
         head.getStyleClass().add("talkListItem_head");
-        head.setStyle(String.format("-fx-background-image: url('file:src/ui/chat/img/%s.png')", talkHead));
+        head.setStyle(String.format("-fx-background-image: url('file:src/ui/chat/img/%s.png')", roomInfo.header));
         children.add(head);
 
         //名字
@@ -51,13 +52,13 @@ public class TalkListItem {
         nikeName.setPrefSize(140, 25);
         nikeName.setLayoutX(80);
         nikeName.setLayoutY(15);
-        nikeName.setText(talkName);
+        nikeName.setText(roomInfo.roomName);
         nikeName.getStyleClass().add("talkListItem_name");
         children.add(nikeName);
 
         //最新信息
         msgSketch = new Label();
-        msgSketch.setId(Ids.TalkListId.createMsgSketchId(talkId));
+        msgSketch.setId(Ids.TalkListId.createMsgSketchId(roomInfo.roomId));
         msgSketch.setPrefSize(200, 25);
         msgSketch.setLayoutX(80);
         msgSketch.setLayoutY(40);
@@ -66,14 +67,14 @@ public class TalkListItem {
 
         //信息时间
         msgData = new Label();
-        msgData.setId(Ids.TalkListId.createMsgDataId(talkId));
+        msgData.setId(Ids.TalkListId.createMsgDataId(roomInfo.roomId));
         msgData.setPrefSize(60, 25);
         msgData.setLayoutX(220);
         msgData.setLayoutY(15);
         msgData.getStyleClass().add("talkListItem_msgData");
         children.add(msgData);
         // 填充；信息简述 & 信息时间
-        fillMsgSketch(talkSketch, talkDate);
+        fillMsgSketch(roomInfo.talkSketch, new Date(roomInfo.date));
 
         //消息提醒
         msgRemind = new Label();
@@ -97,8 +98,8 @@ public class TalkListItem {
 
         //消息框[初始化，未装载]，承载对话信息内容，点击按钮时候填充
         infoBoxList = new ListView<>();
-        infoBoxList.setId(Ids.TalkListId.createInfoBoxListId(talkId));
-        infoBoxList.setUserData(new TalkData(talkName, talkHead));
+        infoBoxList.setId(Ids.TalkListId.createInfoBoxListId(roomInfo.roomId));
+        infoBoxList.setUserData(new TalkData(roomInfo.roomName, roomInfo.header));
         infoBoxList.setPrefSize(850, 560);
         infoBoxList.getStyleClass().add("infoBoxStyle");
     }
@@ -115,6 +116,7 @@ public class TalkListItem {
         return delete;
     }
 
+    //填充最新的一条信息
     public void fillMsgSketch(String talkSketch, Date talkDate) {
         if (null != talkSketch) {
             if (talkSketch.length() > 30) talkSketch = talkSketch.substring(0, 30);
