@@ -1,5 +1,6 @@
 package ui.chat.code.element.group_bar_friend;
 
+import entity.User;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -19,15 +20,12 @@ public class NewFriendItem {
 
     /**
      * 构造函数
-     *
-     * @param userId       用户ID
-     * @param userNickName 用户昵称
-     * @param userHead     用户头像
+     * @param user 用户信息
      * @param status       状态；0/1
      */
-    public NewFriendItem(int userId, String userNickName, String userHead, Integer status) {
+    public NewFriendItem(User user, Integer status) {
         pane = new Pane();
-        pane.setUserData(userId);
+        pane.setUserData(user.getUid());
         pane.setPrefWidth(250);
         pane.setPrefHeight(70);
 //        pane.getStyleClass().add("newFriendItem");
@@ -39,7 +37,7 @@ public class NewFriendItem {
         headLabel.setLayoutX(125);
         headLabel.setLayoutY(10);
         headLabel.getStyleClass().add("newFriendItem_head");
-        headLabel.setStyle(String.format("-fx-background-image: url('file:src/ui/chat/img/%s.png')", userHead));
+        headLabel.setStyle(String.format("-fx-background-image: url('file:src/ui/chat/img/%s.png')", user.getHeader()));
         children.add(headLabel);
 
         // 名称区域
@@ -47,7 +45,7 @@ public class NewFriendItem {
         nameLabel.setPrefSize(200, 30);
         nameLabel.setLayoutX(190);
         nameLabel.setLayoutY(10);
-        nameLabel.setText(userNickName);
+        nameLabel.setText(user.getName());
         nameLabel.getStyleClass().add("newFriendItem_name");
         children.add(nameLabel);
 
@@ -56,7 +54,7 @@ public class NewFriendItem {
         idLabel.setPrefSize(200, 20);
         idLabel.setLayoutX(190);
         idLabel.setLayoutY(40);
-        idLabel.setText(String.valueOf(userId));
+        idLabel.setText(String.valueOf(user.getUid()));
         idLabel.getStyleClass().add("newFriendItem_id");
         children.add(idLabel);
 

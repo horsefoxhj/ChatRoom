@@ -1,5 +1,9 @@
 package ui.login.code;
 
+import entity.User;
+import ui.chat.code.ChatController;
+import ui.util.CacheUtil;
+
 import java.io.IOException;
 
 public class LoginController extends Login implements ILoginMethod {
@@ -23,10 +27,18 @@ public class LoginController extends Login implements ILoginMethod {
     }
 
     @Override
-    public void doLoginSuccess() {
+    public void doLoginSuccess(User user) {
         //关闭当前窗口
         close();
-        //TODO:跳转到聊天窗口
+        //跳转到聊天窗口
+        ChatController chatController = null;
+        try {
+            chatController = new ChatController(user);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        CacheUtil.chatController = chatController;
+        chatController.doShow();
     }
 
     @Override

@@ -2,6 +2,7 @@ package ui.login.code;
 
 import base.login.LoginDataSource;
 import base.login.Result;
+import entity.User;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 
@@ -56,8 +57,8 @@ public class LoginEventDefine implements ILoginEvent {
 
                 //登陆结果为Success
                 if (result instanceof Result.Success) {
-                    loginMethod.doLoginSuccess();
-//                    User user = ((Result.Success<User>) result).getData();
+                    User user = ((Result.Success<User>) result).getData();
+                    loginMethod.doLoginSuccess(user);
                 }
                 //登录结果为Error
                 else {

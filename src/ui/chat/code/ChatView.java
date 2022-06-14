@@ -20,6 +20,8 @@ import ui.chat.code.element.group_bar_friend.NewFriend;
 
 import java.util.ArrayList;
 
+import static utils.StringUtil.isNumeric;
+
 /**
  * 聊天窗口展示与事件
  */
@@ -69,7 +71,21 @@ public class ChatView {
             //创建待添加好友列表
             ListView<Pane> listView = newFriend.newFriendListView();
             listView.getItems().clear();
-            chatEvent.doLoadNewFriend(controller.userId, listView);
+
+            //从数据库中获取申请添加的好友，并加载到列表中
+            DB db = DB.getInstance();
+            //获取待添加的好友
+            ArrayList<User> friends_P = db.queryFriends(controller.userId, DB.PENDING);
+            ArrayList<User> friends_A = db.queryFriends(controller.userId, DB.ACCEPTED);
+
+            //添加未接受的好友
+            for (User u : friends_P) {
+                chatEvent.doLoadNewFriend(u, listView, DB.PENDING);
+            }
+            //添加已接受的好友
+            for (User u : friends_A) {
+                chatEvent.doLoadNewFriend(u, listView, DB.ACCEPTED);
+            }
         });
 
         //搜索框事件，搜索好友
@@ -77,12 +93,12 @@ public class ChatView {
         friendSearch.setOnKeyPressed(event -> {
             if (event.getCode().equals(KeyCode.ENTER)) {
                 String text = friendSearch.getText();
-                if (null == text) text = "";
-                if (text.length() > 30) text = text.substring(0, 30);
-                text = text.trim();
-                chatEvent.doSearchFriend(controller.userId, text);
-                // 搜索清空元素
-                newFriend.newFriendListView().getItems().clear();
+                //判断输入是否为数字
+                if (null != text && isNumeric(text)) {
+                    int friendId = Integer.parseInt(text);
+                    //搜索用户
+                    chatEvent.doSearchFriend(friendId);
+                }
             }
         });
     }
@@ -118,7 +134,7 @@ public class ChatView {
         DB db = DB.getInstance();
         ArrayList<User> friends = db.queryFriends(controller.userId, DB.ACCEPTED);
         for (User u : friends) {
-            controller.addFriendUser(false, u.getUid(), u.getName(), u.getHeader());
+            controller.addFriendUser(false, u);
         }
     }
 
@@ -155,30 +171,31 @@ public class ChatView {
 
 
     /**
-     * @param talkElementPane 对话框元素面板
-     * @param msgRemindLabel  消息提醒标签
-     * @param idxFirst        是否设置首位
-     * @param selected        是否选中
-     * @param isRemind        是否提醒
+     * @param talkPane       对话框元素面板
+     * @param msgRemindLabel 消息提醒标签
+     * @param idxFirst       是否设置首位
+     * @param selected       是否选中
+     * @param isRemind       是否提醒
      * @Describe 更新对话框列表元素位置指定并选中[在聊天消息发送时触达]
      */
-    void updateTalkListIdxAndSelected(Pane talkElementPane, Label msgRemindLabel, Boolean idxFirst, Boolean selected, Boolean isRemind) {
+    void updateTalkListIdxAndSelected(Pane talkPane, Label msgRemindLabel, Boolean idxFirst, Boolean selected, Boolean isRemind) {
         // 对话框ID、好友ID
-        TalkBoxData talkBoxData = (TalkBoxData) talkElementPane.getUserData();
+        TalkBoxData talkBoxData = (TalkBoxData) talkPane.getUserData();
         // 填充到对话框
         ListView<Pane> talkList = controller.$("talkList", ListView.class);
         // 对话空为空，初始化[置顶、选中、提醒]
         if (talkList.getItems().isEmpty()) {
             if (idxFirst) {
-                talkList.getItems().add(0, talkElementPane);
+                talkList.getItems().add(0, talkPane);
             }
             if (selected) {
                 // 设置对话框[√选中]
-                talkList.getSelectionModel().select(talkElementPane);
+                talkList.getSelectionModel().select(talkPane);
             }
             isRemind(msgRemindLabel, isRemind);
             return;
         }
+
         // 对话空不为空，判断第一个元素是否当前聊天Pane
         Pane firstPane = talkList.getItems().get(0);
         // 判断元素是否在首位，如果是首位可返回不需要重新设置首位
@@ -190,7 +207,7 @@ public class ChatView {
                 return;
             }
             TalkBoxData selectedItemUserData = (TalkBoxData) selectedItem.getUserData();
-            if (null != selectedItemUserData) {
+            if (null != selectedItemUserData && talkBoxData.getRoomId() == selectedItemUserData.getRoomId()) {
                 clearRemind(msgRemindLabel);
             } else {
                 isRemind(msgRemindLabel, isRemind);
@@ -198,12 +215,12 @@ public class ChatView {
             return;
         }
         if (idxFirst) {
-            talkList.getItems().remove(talkElementPane);
-            talkList.getItems().add(0, talkElementPane);
+            talkList.getItems().remove(talkPane);
+            talkList.getItems().add(0, talkPane);
         }
         if (selected) {
             // 设置对话框[√选中]
-            talkList.getSelectionModel().select(talkElementPane);
+            talkList.getSelectionModel().select(talkPane);
         }
         isRemind(msgRemindLabel, isRemind);
     }

@@ -1,5 +1,7 @@
 package ui.login.code;
 
+import entity.User;
+
 /**
  * @Author Hx
  * @Date 2022/5/25 23:24
@@ -20,6 +22,6 @@ public interface ILoginMethod {
     /**
      * 登陆成功；跳转聊天窗口
      */
-    void doLoginSuccess();
+    void doLoginSuccess(User user);
 
 }

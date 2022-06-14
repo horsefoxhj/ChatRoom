@@ -10,10 +10,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Pane;
+import ui.chat.code.data.RemindCount;
 import ui.chat.code.element.group_bar_chat.MsgBox;
 import ui.chat.code.element.group_bar_chat.TalkListItem;
 import ui.chat.code.element.group_bar_friend.FriendListItem;
-import ui.chat.code.element.group_bar_friend.NewFriendItem;
 import ui.util.CacheUtil;
 import ui.util.Ids;
 
@@ -25,17 +25,13 @@ public class ChatController extends Chat implements IChatMethod {
     private ChatEventDefine chatEventDefine;
 
     /**
-     * 设置登陆用户头像
-     *
-     * @param userId   用户ID
-     * @param userName 用户昵称
-     * @param header   头像图片名称
+     * 设置登陆用户
      */
-    public ChatController(int userId, String userName, String header) throws IOException {
-        super(userId, userName, header);
+    public ChatController(User user) throws IOException {
+        super(user);
         //设置头像
         Button button = $("bar_portrait", Button.class);
-        button.setStyle(String.format("-fx-background-image: url('file:src/ui/chat/img/%s.png')", header));
+        button.setStyle(String.format("-fx-background-image: url('file:src/ui/chat/img/%s.png')", user.getHeader()));
     }
 
     @Override
@@ -106,9 +102,9 @@ public class ChatController extends Chat implements IChatMethod {
             //填充消息栏
             fillInfoBox(newTalkListItem, roomInfo.roomName);
             //清除消息提醒
-//            Label msgRemind = newTalkListItem.msgRemind();
-//            msgRemind.setUserData(new RemindCount(0));
-//            msgRemind.setVisible(false);
+            Label msgRemind = newTalkListItem.msgRemind();
+            msgRemind.setUserData(new RemindCount(0));
+            msgRemind.setVisible(false);
         });
 
         //鼠标事件[移入/移出]
@@ -247,14 +243,12 @@ public class ChatController extends Chat implements IChatMethod {
     /**
      * 往好友列表填充好友
      *
-     * @param selected   选中;true/false
-     * @param friendId   好友ID
-     * @param friendName 好友昵称
-     * @param header     好友头像
+     * @param selected 选中;true/false
+     * @param user     用户信息
      */
     @Override
-    public void addFriendUser(boolean selected, int friendId, String friendName, String header) {
-        FriendListItem friendListItem = new FriendListItem(friendId, friendName, header);
+    public void addFriendUser(boolean selected, User user) {
+        FriendListItem friendListItem = new FriendListItem(user.getUid(), user.getName(), user.getHeader());
         Pane pane = friendListItem.pane();
         // 添加到好友列表
         ListView<Pane> userListView = friendsList_ListView;
@@ -274,41 +268,20 @@ public class ChatController extends Chat implements IChatMethod {
         ObservableList<Node> children = detailContent.getChildren();
 
         Button sendMsgButton = new Button();
-        sendMsgButton.setId(friendId + "");
+        sendMsgButton.setId(user.getUid() + "");
         sendMsgButton.getStyleClass().add("friendUserSendMsgButton");
         sendMsgButton.setPrefSize(176, 50);
         sendMsgButton.setLayoutX(337);
         sendMsgButton.setLayoutY(450);
         sendMsgButton.setText("发送消息");
-        chatEventDefine.doEventOpenFriendUserSendMsg(sendMsgButton, friendId, friendName, header);
+
+        chatEventDefine.switchFriendTalkPane(sendMsgButton, user.getUid());
+
         children.add(sendMsgButton);
         // 添加监听事件
         pane.setOnMousePressed(event -> {
             clearViewListSelectedAll($("friendList", ListView.class), $("groupListView", ListView.class));
-            chatView.setContentPaneBox(friendId, friendName, detailContent);
-        });
-//        chatView.setContentPaneBox(friendId, friendName, detailContent);
-    }
-
-    /**
-     * 添加好友
-     *
-     * @param userId       好友ID
-     * @param userNickName 好友昵称
-     * @param userHead     好友头像
-     * @param status       状态；0添加、1允许、2已添加
-     */
-    @Override
-    public void addNewFriend(int userId, String userNickName, String userHead, Integer status) {
-        NewFriendItem newFriendItem = new NewFriendItem(userId, userNickName, userHead, status);
-        Pane pane = newFriendItem.pane();
-        // 添加到好友列表
-        ListView<Pane> newFriend_ListView = $("newFriend_ListView", ListView.class);
-        ObservableList<Pane> items = newFriend_ListView.getItems();
-        items.add(pane);
-        // 点击事件
-        newFriendItem.statusLabel().setOnMousePressed(event -> {
-            chatEventDefine.doAddUser(super.userId, userId);
+            chatView.setContentPaneBox(user.getUid(), user.getName(), detailContent);
         });
     }
 }

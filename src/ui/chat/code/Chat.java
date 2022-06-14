@@ -1,5 +1,6 @@
 package ui.chat.code;
 
+import entity.User;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -43,10 +44,10 @@ public abstract class Chat extends UIParent {
     //聊天列表
     public ListView talkList;
 
-    Chat(int userId, String userName, String header) throws IOException {
-        this.userId = userId;
-        this.userName = userName;
-        this.userHeader = header;
+    Chat(User user) throws IOException {
+        this.userId = user.getUid();
+        this.userName = user.getName();
+        this.userHeader = user.getHeader();
         root = FXMLLoader.load(getClass().getClassLoader().getResource("ui/chat/chat.fxml"));
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);

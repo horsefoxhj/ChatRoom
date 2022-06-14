@@ -3,7 +3,9 @@ package ui.chat.code;
 import base.client.ClientManager;
 import db.DB;
 import entity.Message;
+import entity.RoomInfo;
 import entity.User;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MultipleSelectionModel;
@@ -14,6 +16,7 @@ import ui.chat.code.element.group_bar_friend.NewFriendItem;
 
 import java.util.ArrayList;
 
+import static db.DB.ALL;
 import static utils.JsonUtils.Msg2Str;
 
 /**
@@ -86,6 +89,7 @@ public class ChatEventDefine implements IChatEvent {
         chat.bar_friend.setOnAction(event -> {
             switchBarChat(chat.bar_chat, chat.group_bar_chat, false);
             switchBarFriend(chat.bar_friend, chat.group_bar_friend, true);
+            refreshFriendList();
         });
         chat.bar_friend.setOnMouseEntered(event -> {
             boolean visible = chat.group_bar_friend.isVisible();
@@ -122,15 +126,19 @@ public class ChatEventDefine implements IChatEvent {
         }
     }
 
-    // 好友；开启与好友发送消息 [点击发送消息时候触发 -> 添加到对话框、选中、展示对话列表]
-    public void doEventOpenFriendUserSendMsg(Button sendMsgButton, int friendId, String friendName, String friendHeader) {
+    //转到好友聊天面板 [点击发送消息时候触发 -> 添加到对话框、选中、展示对话列表]
+    public void switchFriendTalkPane(Button sendMsgButton, int friendId) {
         sendMsgButton.setOnAction(event -> {
-            // 1. 添加好友到对话框
-//            chatMethod.addTalkBox(0, 0, friendId, friendName, friendHeader, null, null, true);
-            // 2. 切换到对话框窗口
+
+            DB db = DB.getInstance();
+            //查询聊天室
+            RoomInfo roomInfo = db.queryRoomWithFriendId(chat.userId, friendId);
+            //添加好友到对话框
+            chatMethod.addTalkBox(0, roomInfo, true);
+            //切换到对话框窗口
             switchBarChat(chat.$("bar_chat", Button.class), chat.$("group_bar_chat", Pane.class), true);
             switchBarFriend(chat.$("bar_friend", Button.class), chat.$("group_bar_friend", Pane.class), false);
-            // 3. 事件处理；填充到对话框
+            //事件处理；填充到对话框
             doAddTalkUser(chat.userId, friendId);
         });
     }
@@ -195,7 +203,7 @@ public class ChatEventDefine implements IChatEvent {
 
     @Override
     public void doAddTalkUser(int userId, int friendId) {
-//        chatMethod.addTalkBox(-1,);
+
     }
 
     @Override
@@ -210,37 +218,70 @@ public class ChatEventDefine implements IChatEvent {
     }
 
     @Override
-    public void doLoadNewFriend(int userId, ListView<Pane> listView) {
-        //从数据库中获取申请添加的好友，并加载到列表中
+    public void doLoadNewFriend(User user, ListView<Pane> listView, Integer status) {
+        if (user != null && listView != null) {
+            NewFriendItem item = new NewFriendItem(user, status);
+            //设置点击事件
+            item.statusLabel().setOnMousePressed(mouseEvent -> {
+                //更新ui
+                item.statusLabel().setText("已添加");
+                item.statusLabel().getStyleClass().clear();
+                item.statusLabel().setUserData(2);
+                item.statusLabel().getStyleClass().add("newFriendItem_statusLabel_2");
+                doAddFriend(chat.userId, (Integer) item.pane().getUserData());
+            });
+            listView.getItems().add(item.pane());
+        }
+    }
+
+    @Override
+    public void doSearchFriend(int friendId) {
+        ListView<Pane> listView = chat.$("newFriend_ListView", ListView.class);
+        //从数据库中搜索用户
         DB db = DB.getInstance();
-        //获取待添加的好友
-        ArrayList<User> friends_P = db.queryFriends(userId, DB.PENDING);
-        ArrayList<User> friends_A = db.queryFriends(userId, DB.ACCEPTED);
-
-        //添加未接受的好友
-        for (User u : friends_P) {
-            listView.getItems().add(new NewFriendItem(u.getUid(), u.getName(), u.getHeader(), DB.PENDING).pane());
-        }
-        //添加已接受的好友
-        for (User u : friends_A) {
-            listView.getItems().add(new NewFriendItem(u.getUid(), u.getName(), u.getHeader(), DB.ACCEPTED).pane());
+        User user = db.queryUserById(friendId);
+        // 搜索清空元素
+        listView.getItems().clear();
+        //查询结果不为null,且结果不为本人,且不是本人的朋友
+        if (user != null && user.getUid() != chat.userId) {
+            ArrayList<User> users = db.queryFriends(chat.userId, ALL);
+            //将搜索到的用户加载到列表
+            for (User s : users) {
+                //用户是好友
+                if (s.getUid() == user.getUid()) {
+                    doLoadNewFriend(user, listView, DB.ACCEPTED);
+                    return;
+                }
+            }
+            //用户不是好友
+            doLoadNewFriend(user, listView, DB.PENDING);
         }
     }
 
     @Override
-    public void doSearchFriend(int userId, String text) {
-        //TODO:从数据库中搜索用户
-        System.out.println("搜索好友：" + text);
-    }
-
-    @Override
-    public void doAddUser(int userId, int friendId) {
-        System.out.println("添加好友：" + friendId);
+    public void doAddFriend(int userId, int friendId) {
+        //向数据库添加好友
+        DB db = DB.getInstance();
+        db.insertFriendship(userId, friendId);
     }
 
     @Override
     public void doCreateGroup(int uid) {
         //TODO:创建群聊
+    }
+
+    /**
+     * 刷新好友列表
+     */
+    private void refreshFriendList(){
+        ObservableList<Pane> items = chat.friendsList_ListView.getItems();
+        items.clear();
+        //从数据库获取好友并加载到列表
+        DB db = DB.getInstance();
+        ArrayList<User> friends = db.queryFriends(chat.userId, DB.ACCEPTED);
+        for (User u : friends) {
+            chatMethod.addFriendUser(false, u);
+        }
     }
 
     // 表情

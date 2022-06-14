@@ -1,6 +1,7 @@
 package ui.chat.code;
 
 import entity.Message;
+import entity.User;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Pane;
 
@@ -14,19 +15,14 @@ public interface IChatEvent {
     /**
      * 发送消息按钮
      *
-     * @param userId   用户Id
-     * @param roomId   对话Id(好友ID/群组ID)
-     * @param talkType 对话框类型；0好友、1群组
-     * @param msg      发送消息内容
-     * @param msgType  消息类型；0文字消息、1固定表情
-     * @param msgDate  发送消息时间
+     * @param message 消息
      */
     void doSendMsg(Message message);
 
     /**
      * 事件处理；开启与好友发送消息 [点击发送消息时候触发 -> 添加到对话框、选中、展示对话列表]
      *
-     * @param userId       用户ID
+     * @param userId   用户ID
      * @param friendId 好友ID
      */
     void doAddTalkUser(int userId, int friendId);
@@ -50,18 +46,18 @@ public interface IChatEvent {
     /**
      * 事件处理；查询用户时，添加到查询列表
      *
-     * @param userId   用户ID
+     * @param user     用户信息
      * @param listView 用户列表[非必需使用，同步接口可使用]
+     * @param status   用户状态
      */
-    void doLoadNewFriend(int userId, ListView<Pane> listView);
+    void doLoadNewFriend(User user, ListView<Pane> listView, Integer status);
 
     /**
      * 事件处理；好友搜索[搜索后结果调用添加：]
      *
-     * @param userId 用户ID
-     * @param text   搜索关键字
+     * @param friendId 用户ID
      */
-    void doSearchFriend(int userId, String text);
+    void doSearchFriend(int friendId);
 
     /**
      * 添加好友事件
@@ -69,10 +65,11 @@ public interface IChatEvent {
      * @param userId   个人ID
      * @param friendId 好友ID
      */
-    void doAddUser(int userId, int friendId);
+    void doAddFriend(int userId, int friendId);
 
     /**
      * 创建群聊
+     *
      * @param uid 个人ID
      */
     void doCreateGroup(int uid);

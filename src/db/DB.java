@@ -18,17 +18,18 @@ public class DB {
 
     public final static int PENDING = 1; //待接受的好友
     public final static int ACCEPTED = 2;//已接受的好友
+    public final static int ALL = 3;//全部好友
+    public final static int MODE_SINGLE = 1;//好友
+    public final static int MODE_GROUPS = 2;//群聊
     private final static String DRIVER = "com.mysql.cj.jdbc.Driver"; //MySQL驱动
     private final static int SUCCESS = 1;
     private final static int ERROR = 0;
     PreparedStatement insertRecord;
     PreparedStatement queryRecord;
     PreparedStatement queryUsers;
-    PreparedStatement insertRelationship;
     PreparedStatement queryRelationship;
     PreparedStatement insertRoomInfo;
     PreparedStatement queryRoomInfo;
-    PreparedStatement insertFriends;
     PreparedStatement queryFriends;
     private Connection conn;
     private boolean driverLoaded = false;
@@ -189,8 +190,8 @@ public class DB {
             insertRecord =
                     conn.prepareStatement("insert into record(room_id,timestamp,uid,text) value (?,?,?,?)");
             insertRoomInfo =
-                    conn.prepareStatement("insert into roominfo(room_id, room_Name, port) " +
-                            "value (?,?,?)");
+                    conn.prepareStatement("insert into roominfo(room_id, room_Name, port, mode) " +
+                            "value (?,?,?,?)");
 
             //初始化查询语句
             queryUsers = conn.prepareStatement("select * from user");
@@ -222,7 +223,9 @@ public class DB {
                         && res.getString("password").equals(password)) {
                     user.setAccount(account);
                     user.setPassword(password);
+                    user.setUid(res.getInt("uid"));
                     user.setName(res.getString("name"));
+                    user.setHeader(res.getString("head"));
                     return user;
                 }
             }
@@ -234,7 +237,7 @@ public class DB {
     }
 
     /**
-     * 查询传入uid对应用户的状态为status好友
+     * 查询传入uid对应用户的状态为status好友,[ALL]查询所有好友
      *
      * @param uid    用户id
      * @param status 用户状态
@@ -247,22 +250,25 @@ public class DB {
             ResultSet friends = queryFriends.executeQuery();
             while (friends.next()) {
                 //是该uid的好友
-                if (friends.getInt("uid") == uid && friends.getInt("status") == status) {
-                    int friends_id = friends.getInt("friend_uid");
-
-                    //查询该好友的信息
-                    ResultSet users = queryUsers.executeQuery();
-                    while (users.next()) {
-                        //将该好友的数据存入列表
-                        if (users.getInt("uid") == friends_id) {
-                            User user = new User(users.getInt("uid"),
-                                    users.getString("name"),
-                                    users.getString("account"),
-                                    users.getString("password"));
-                            //设置好友状态，是否在线
-                            if (users.getInt("online") == ONLINE)
-                                user.setStatus(ONLINE);
-                            arrayList.add(user);
+                int f_status = friends.getInt("status");
+                if (friends.getInt("uid") == uid) {
+                    //如果status为ALL则查询所有好友，否则只查询状态为status的好友
+                    if (status == ALL || f_status == status) {
+                        int friends_id = friends.getInt("friend_uid");
+                        //查询该好友的信息
+                        ResultSet users = queryUsers.executeQuery();
+                        while (users.next()) {
+                            //将该好友的数据存入列表
+                            if (users.getInt("uid") == friends_id) {
+                                User user = new User(users.getInt("uid"),
+                                        users.getString("name"),
+                                        users.getString("account"),
+                                        users.getString("password"));
+                                //设置好友状态，是否在线
+                                if (users.getInt("online") == ONLINE)
+                                    user.setStatus(ONLINE);
+                                arrayList.add(user);
+                            }
                         }
                     }
                 }
@@ -368,31 +374,64 @@ public class DB {
     }
 
     /**
+     * 查询uid与friendId的聊天室
+     *
+     * @param uid      我
+     * @param friendId 朋友
+     * @return roomInfo
+     */
+    public RoomInfo queryRoomWithFriendId(int uid, int friendId) {
+        //查询uid的所有聊天室
+        ArrayList<RoomInfo> infos = queryRoomInfo(uid);
+        //遍历聊天室
+        for (RoomInfo info : infos) {
+            //如果聊天室为私聊
+            if (info.mode == MODE_SINGLE) {
+                try {
+                    //找到和friendId的聊天室
+                    ResultSet rs = queryRelationship.executeQuery();
+                    while (rs.next()) {
+                        //包含friendId
+                        if (rs.getInt("uid") == friendId) {
+                            //返回聊天室信息
+                            return info;
+                        }
+                    }
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * 插入RoomInfo
      *
      * @param room_name
-     * @param port
      */
-    public int insertRoomInfo(String room_name, int port) {
-        int room_id = 0;
+    public int insertRoomInfo(String room_name, int mode) {
+        int id = 0;
         try {
             //获取数据数量
-            PreparedStatement sql = conn.prepareStatement("select count(*) from roominfo");
+            PreparedStatement sql = conn.prepareStatement("select count(1) from roominfo");
             ResultSet res = sql.executeQuery();
             while (res.next())
-                room_id = res.getInt(1) + 1;
+                id = res.getInt(1) + 1;
 
-            insertRoomInfo.setInt(1, room_id);
+            insertRoomInfo.setInt(1, id);
             insertRoomInfo.setString(2, room_name);
-            insertRoomInfo.setInt(3, port);
+            insertRoomInfo.setInt(3, id + 30000);
+            insertRoomInfo.setInt(4, mode);
             insertRoomInfo.executeUpdate();
 
         } catch (SQLException e) {
             e.printStackTrace();
             System.out.println("插入RoomInfo失败");
-            room_id = 0;
+            id = 0;
         }
-        return room_id;
+        return id;
     }
 
     /**
@@ -458,13 +497,50 @@ public class DB {
      * @param friends_uid
      * @throws SQLException
      */
-    private void insertFriendship(int uid, int friends_uid) throws SQLException {
-        PreparedStatement sql
-                = conn.prepareStatement("insert into friends(uid,friend_uid) value (?,?)");
+    public void insertFriendship(int uid, int friends_uid) {
+        try {
+            PreparedStatement sql
+                    = conn.prepareStatement("insert into friends(uid,friend_uid, status) value (?,?,?)");
 
-        sql.setInt(1, uid);
-        sql.setInt(2, friends_uid);
-        sql.executeUpdate();
+            //首先在数据库中查找是否有该好友关系
+            ResultSet rs = queryFriends.executeQuery();
+            while (rs.next()) {
+                //已存在好友关系,处理接受好友申请处理
+                if (uid == rs.getInt("friend_uid")
+                        && friends_uid == rs.getInt("uid")) {
+
+                    //更新好友状态
+                    Statement statement = conn.createStatement();
+                    statement.execute("update friends set status = 2 where uid =" + friends_uid
+                            + " and friend_uid =" + uid);
+                    statement.execute("update friends set status = 2 where uid =" + uid
+                            + " and friend_uid =" + friends_uid);
+
+                    //建立聊天室
+                    User me = queryUserById(uid);
+                    User friend = queryUserById(friends_uid);
+                    int roomId = insertRoomInfo(me.getName() + " and " + friend.getName(), MODE_SINGLE);
+                    //插入聊天室关系
+                    Statement insertRelationship = conn.createStatement();
+                    insertRelationship.execute("insert into room(room_id, uid) VALUE"
+                            + " (" + roomId + "," + uid + ")");
+                    insertRelationship.execute("insert into room(room_id, uid) VALUE"
+                            + " (" + roomId + "," + friends_uid + ")");
+                    return;
+                }
+            }
+            //建立好友申请
+            sql.setInt(1, uid);
+            sql.setInt(2, friends_uid);
+            sql.setInt(3, PENDING);
+            sql.executeUpdate();
+            sql.setInt(1, friends_uid);
+            sql.setInt(2, uid);
+            sql.setInt(3, PENDING);
+            sql.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
