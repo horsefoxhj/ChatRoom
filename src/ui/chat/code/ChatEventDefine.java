@@ -1,6 +1,7 @@
 package ui.chat.code;
 
 import base.client.ClientManager;
+import base.server.ServerManager;
 import db.DB;
 import entity.Message;
 import entity.RoomInfo;
@@ -42,8 +43,9 @@ public class ChatEventDefine implements IChatEvent {
         //好友
         barFriend();
         //发送消息事件
-        doEventTextSend();
-//        doEventToolFace();   // 表情窗体
+        textSend();
+        //创建群聊
+        doCreateGroup();
     }
 
     // 最小化
@@ -126,38 +128,19 @@ public class ChatEventDefine implements IChatEvent {
         }
     }
 
-    //转到好友聊天面板 [点击发送消息时候触发 -> 添加到对话框、选中、展示对话列表]
-    public void switchFriendTalkPane(Button sendMsgButton, int friendId) {
+    //转到聊天面板 [点击发送消息时候触发 -> 添加到对话框、选中、展示对话列表]
+    public void switch2TalkPaneG(Button sendMsgButton, RoomInfo roomInfo) {
         sendMsgButton.setOnAction(event -> {
-
-            DB db = DB.getInstance();
-            //查询聊天室
-            RoomInfo roomInfo = db.queryRoomWithFriendId(chat.userId, friendId);
-            //添加好友到对话框
+            //添加群聊到对话框
             chatMethod.addTalkBox(0, roomInfo, true);
             //切换到对话框窗口
             switchBarChat(chat.$("bar_chat", Button.class), chat.$("group_bar_chat", Pane.class), true);
             switchBarFriend(chat.$("bar_friend", Button.class), chat.$("group_bar_friend", Pane.class), false);
-            //事件处理；填充到对话框
-            doAddTalkUser(chat.userId, friendId);
         });
     }
 
-//    // 群组；开启与群组发送消息
-//    public void doEventOpenFriendGroupSendMsg(Button sendMsgButton, String groupId, String groupName, String groupHead) {
-//        sendMsgButton.setOnAction(event -> {
-//            // 1. 添加好友到对话框
-//            chatMethod.addTalkBox(0, 1, groupId, groupName, groupHead, null, null, true);
-//            // 2. 切换到对话框窗口
-//            switchBarChat(chat.$("bar_chat", Button.class), chat.$("group_bar_chat", Pane.class), true);
-//            switchBarFriend(chat.$("bar_friend", Button.class), chat.$("group_bar_friend", Pane.class), false);
-//            // 3. 事件处理；填充到对话框
-//            chatEvent.doEventAddTalkGroup(chat.userId, groupId);
-//        });
-//    }
-
     //设置发送消息事件
-    private void doEventTextSend() {
+    private void textSend() {
         //发送消息(回车)
         chat.txt_input.setOnKeyPressed(event -> {
             if (event.getCode().equals(KeyCode.ENTER)) {
@@ -199,16 +182,6 @@ public class ChatEventDefine implements IChatEvent {
     public void doSendMsg(Message message) {
         //获取对应room的client线程并发送消息
         ClientManager.getClientThread(message.roomId).sendMsg(Msg2Str(message));
-    }
-
-    @Override
-    public void doAddTalkUser(int userId, int friendId) {
-
-    }
-
-    @Override
-    public void doAddTalkGroup(int userId, String groupId) {
-        System.out.println("填充到聊天窗口[群组] groupId：" + groupId);
     }
 
     @Override
@@ -260,20 +233,28 @@ public class ChatEventDefine implements IChatEvent {
 
     @Override
     public void doAddFriend(int userId, int friendId) {
-        //向数据库添加好友
-        DB db = DB.getInstance();
-        db.insertFriendship(userId, friendId);
+        //添加好友，并启动服务线程
+        RoomInfo roomInfo = ServerManager.getInstance().insertFriendship(userId, friendId);
+        if (roomInfo != null)
+            ClientManager.createClientThread(roomInfo.port, roomInfo.roomId, userId);
     }
 
     @Override
-    public void doCreateGroup(int uid) {
-        //TODO:创建群聊
+    public void doCreateGroup() {
+
+        chat.group_add.setOnMousePressed(mouseEvent -> {
+            String groupName = chat.input_groupName.getText();
+            RoomInfo roomInfo = ServerManager.getInstance().createGroup(groupName, chat.userId);
+            if (roomInfo != null)
+                ClientManager.createClientThread(roomInfo.port, roomInfo.roomId, chat.userId);
+            chatMethod.addTalkBox(0, roomInfo, true);
+        });
     }
 
     /**
      * 刷新好友列表
      */
-    private void refreshFriendList(){
+    private void refreshFriendList() {
         ObservableList<Pane> items = chat.friendsList_ListView.getItems();
         items.clear();
         //从数据库获取好友并加载到列表
@@ -284,13 +265,5 @@ public class ChatEventDefine implements IChatEvent {
         }
     }
 
-    // 表情
-//    private void doEventToolFace() {
-//        FaceController face = new FaceController(chat, chat, chatEvent, chatMethod);
-//        Button tool_face = chat.$("tool_face", Button.class);
-//        tool_face.setOnMousePressed(event -> {
-//            face.doShowFace(chatMethod.getToolFaceX(), chatMethod.getToolFaceY());
-//        });
-//    }
 
 }

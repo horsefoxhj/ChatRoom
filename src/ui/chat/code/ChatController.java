@@ -11,9 +11,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Pane;
 import ui.chat.code.data.RemindCount;
+import ui.chat.code.data.TalkBoxData;
 import ui.chat.code.element.group_bar_chat.MsgBox;
 import ui.chat.code.element.group_bar_chat.TalkListItem;
 import ui.chat.code.element.group_bar_friend.FriendListItem;
+import ui.chat.code.element.group_bar_friend.GroupListItem;
 import ui.util.CacheUtil;
 import ui.util.Ids;
 
@@ -108,12 +110,8 @@ public class ChatController extends Chat implements IChatMethod {
         });
 
         //鼠标事件[移入/移出]
-        ItemPane.setOnMouseEntered(event -> {
-            newTalkListItem.delete().setVisible(true);
-        });
-        ItemPane.setOnMouseExited(event -> {
-            newTalkListItem.delete().setVisible(false);
-        });
+        ItemPane.setOnMouseEntered(event -> newTalkListItem.delete().setVisible(true));
+        ItemPane.setOnMouseExited(event -> newTalkListItem.delete().setVisible(false));
 
         //填充对话框消息栏
         fillInfoBox(newTalkListItem, roomInfo.roomName);
@@ -165,7 +163,7 @@ public class ChatController extends Chat implements IChatMethod {
         // 滚动条
         listView.scrollTo(left);
         // 设置位置&选中
-        chatView.updateTalkListIdxAndSelected(talkListItem.pane(), talkListItem.msgRemind(), idxFirst, selected, isRemind);
+        updateTalkListIdxAndSelected(talkListItem.pane(), talkListItem.msgRemind(), idxFirst, selected, isRemind);
     }
 
     @Override
@@ -178,67 +176,46 @@ public class ChatController extends Chat implements IChatMethod {
         // 滚动条
         listView.scrollTo(right);
         // 设置位置&选中
-        chatView.updateTalkListIdxAndSelected(talkListItem.pane(), talkListItem.msgRemind(), idxFirst, selected, isRemind);
+        updateTalkListIdxAndSelected(talkListItem.pane(), talkListItem.msgRemind(), idxFirst, selected, isRemind);
     }
 
-//    @Override
-//    public void addTalkMsgGroupLeft(String talkId, String userId, String userNickName, String userHead, String msg, Integer msgType, Date msgDate, Boolean idxFirst, Boolean selected, Boolean isRemind) {
-//        // 自己的消息抛弃
-//        if (super.userId.equals(userId)) return;
-//        TalkListItem talkElement = CacheUtil.talkMap.get(talkId);
-//        if (null == talkElement) {
-//            GroupsData groupsData = (GroupsData) $(Ids.TalkListId.createFriendGroupId(talkId), Pane.class).getUserData();
-//            if (null == groupsData) return;
-//            addTalkBox(0, 1, talkId, groupsData.getGroupName(), groupsData.getGroupHead(), userNickName + "：" + msg, msgDate, false);
-//            talkElement = CacheUtil.talkMap.get(talkId);
-//            // 事件通知(开启与群组发送消息)
-//            chatEvent.doEventAddTalkGroup(super.userId, talkId);
-//        }
-//        ListView<Pane> listView = talkElement.infoBoxList();
-//        Pane left = new MsgBox().left(userNickName, userHead, msg, msgType);
-//        // 消息填充
-//        listView.getItems().add(left);
-//        // 滚动条
-//        listView.scrollTo(left);
-//        talkElement.fillMsgSketch(0 == msgType ? userNickName + "：" + msg : userNickName + "：[表情]", msgDate);
-//        // 设置位置&选中
-//        chatView.updateTalkListIdxAndSelected(1, talkElement.pane(), talkElement.msgRemind(), idxFirst, selected, isRemind);
-//    }
+    @Override
+    public void addFriendGroup(boolean selected, RoomInfo roomInfo) {
+        GroupListItem groupListItem = new GroupListItem(roomInfo.roomId, roomInfo.roomName, roomInfo.header);
+        Pane pane = groupListItem.pane();
+        // 添加到群组列表
+        ListView<Pane> groupListView = groupsList_ListView;
+        ObservableList<Pane> items = groupListView.getItems();
+        items.add(pane);
+        groupListView.setPrefHeight(80 * items.size());
+        groupsList_Pane.setPrefHeight(80 * items.size());
+        //选中
+        if (selected) {
+            groupListView.getSelectionModel().select(pane);
+        }
 
-//    @Override
-//    public void addFriendGroup(String groupId, String groupName, String groupHead) {
-//        ElementFriendGroup elementFriendGroup = new ElementFriendGroup(groupId, groupName, groupHead);
-//        Pane pane = elementFriendGroup.pane();
-//        // 添加到群组列表
-//        ListView<Pane> groupListView = $("groupListView", ListView.class);
-//        ObservableList<Pane> items = groupListView.getItems();
-//        items.add(pane);
-//        groupListView.setPrefHeight(80 * items.size());
-//        $("friendGroupList", Pane.class).setPrefHeight(80 * items.size());
-//
-//        // 群组，内容框[初始化，未装载]，承载群组信息内容，点击按钮时候填充
-//        Pane detailContent = new Pane();
-//        detailContent.setPrefSize(850, 560);
-//        detailContent.getStyleClass().add("friendGroupDetailContent");
-//        ObservableList<Node> children = detailContent.getChildren();
-//
-//        Button sendMsgButton = new Button();
-//        sendMsgButton.setId(groupId);
-//        sendMsgButton.getStyleClass().add("friendGroupSendMsgButton");
-//        sendMsgButton.setPrefSize(176, 50);
-//        sendMsgButton.setLayoutX(337);
-//        sendMsgButton.setLayoutY(450);
-//        sendMsgButton.setText("发送消息");
-//        chatEventDefine.doEventOpenFriendGroupSendMsg(sendMsgButton, groupId, groupName, groupHead);
-//        children.add(sendMsgButton);
-//
-//        // 添加监听事件
-//        pane.setOnMousePressed(event -> {
-//            clearViewListSelectedAll($("friendList", ListView.class), $("userListView", ListView.class));
-//            chatView.setContentPaneBox(groupId, groupName, detailContent);
-//        });
-//        chatView.setContentPaneBox(groupId, groupName, detailContent);
-//    }
+        // 群组，内容框[初始化，未装载]，承载群组信息内容，点击按钮时候填充
+        Pane detailContent = new Pane();
+        detailContent.setPrefSize(850, 560);
+        detailContent.getStyleClass().add("friendGroupDetailContent");
+        ObservableList<Node> children = detailContent.getChildren();
+
+        Button sendMsgButton = new Button();
+        sendMsgButton.setId(roomInfo.roomId + "");
+        sendMsgButton.getStyleClass().add("friendGroupSendMsgButton");
+        sendMsgButton.setPrefSize(176, 50);
+        sendMsgButton.setLayoutX(337);
+        sendMsgButton.setLayoutY(450);
+        sendMsgButton.setText("发送消息");
+        chatEventDefine.switch2TalkPaneG(sendMsgButton, roomInfo);
+        children.add(sendMsgButton);
+
+        // 添加监听事件
+        pane.setOnMousePressed(event -> {
+            clearViewListSelectedAll($("friendList", ListView.class), $("groupListView", ListView.class));
+            chatView.setContentPaneBox(roomInfo.roomId, roomInfo.roomName, detailContent);
+        });
+    }
 
     /**
      * 往好友列表填充好友
@@ -275,13 +252,97 @@ public class ChatController extends Chat implements IChatMethod {
         sendMsgButton.setLayoutY(450);
         sendMsgButton.setText("发送消息");
 
-        chatEventDefine.switchFriendTalkPane(sendMsgButton, user.getUid());
-
+        //查询聊天室
+        DB db = DB.getInstance();
+        RoomInfo roomInfo = db.queryRoomWithFriendId(userId, user.getUid());
+        chatEventDefine.switch2TalkPaneG(sendMsgButton, roomInfo);
         children.add(sendMsgButton);
+
         // 添加监听事件
         pane.setOnMousePressed(event -> {
             clearViewListSelectedAll($("friendList", ListView.class), $("groupListView", ListView.class));
             chatView.setContentPaneBox(user.getUid(), user.getName(), detailContent);
         });
+    }
+
+
+
+    /**
+     * @param talkPane       对话框元素面板
+     * @param msgRemindLabel 消息提醒标签
+     * @param idxFirst       是否设置首位
+     * @param selected       是否选中
+     * @param isRemind       是否提醒
+     * @Describe 更新对话框列表元素位置指定并选中[在聊天消息发送时触达]
+     */
+    void updateTalkListIdxAndSelected(Pane talkPane, Label msgRemindLabel, Boolean idxFirst, Boolean selected, Boolean isRemind) {
+        // 对话框ID、好友ID
+        TalkBoxData talkBoxData = (TalkBoxData) talkPane.getUserData();
+        // 填充到对话框
+        ListView<Pane> talkList = $("talkList", ListView.class);
+        // 对话空为空，初始化[置顶、选中、提醒]
+        if (talkList.getItems().isEmpty()) {
+            if (idxFirst) {
+                talkList.getItems().add(0, talkPane);
+            }
+            if (selected) {
+                // 设置对话框[√选中]
+                talkList.getSelectionModel().select(talkPane);
+            }
+            isRemind(msgRemindLabel, isRemind);
+            return;
+        }
+
+        // 对话空不为空，判断第一个元素是否当前聊天Pane
+        Pane firstPane = talkList.getItems().get(0);
+        // 判断元素是否在首位，如果是首位可返回不需要重新设置首位
+        if (talkBoxData.getRoomId() == ((TalkBoxData) firstPane.getUserData()).getRoomId()) {
+            Pane selectedItem = talkList.getSelectionModel().getSelectedItem();
+            // 选中判断；如果第一个元素已经选中[说明正在会话]，那么清空消息提醒
+            if (null == selectedItem) {
+                isRemind(msgRemindLabel, isRemind);
+                return;
+            }
+            TalkBoxData selectedItemUserData = (TalkBoxData) selectedItem.getUserData();
+            if (null != selectedItemUserData && talkBoxData.getRoomId() == selectedItemUserData.getRoomId()) {
+                clearRemind(msgRemindLabel);
+            } else {
+                isRemind(msgRemindLabel, isRemind);
+            }
+            return;
+        }
+        if (idxFirst) {
+            talkList.getItems().remove(talkPane);
+            talkList.getItems().add(0, talkPane);
+        }
+        if (selected) {
+            // 设置对话框[√选中]
+            talkList.getSelectionModel().select(talkPane);
+        }
+        isRemind(msgRemindLabel, isRemind);
+    }
+
+    /**
+     * 消息提醒
+     *
+     * @param msgRemindLabel 消息面板
+     */
+    private void isRemind(Label msgRemindLabel, Boolean isRemind) {
+        if (!isRemind) return;
+        msgRemindLabel.setVisible(true);
+        RemindCount remindCount = (RemindCount) msgRemindLabel.getUserData();
+        // 超过10个展示省略号
+        if (remindCount.getCount() > 99) {
+            msgRemindLabel.setText("···");
+            return;
+        }
+        int count = remindCount.getCount() + 1;
+        msgRemindLabel.setUserData(new RemindCount(count));
+        msgRemindLabel.setText(String.valueOf(count));
+    }
+
+    private void clearRemind(Label msgRemindLabel) {
+        msgRemindLabel.setVisible(false);
+        msgRemindLabel.setUserData(new RemindCount(0));
     }
 }

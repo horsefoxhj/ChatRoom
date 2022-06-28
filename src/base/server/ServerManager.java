@@ -5,7 +5,6 @@ import entity.RoomInfo;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Random;
 
 /**
  * @Author Hx
@@ -13,9 +12,9 @@ import java.util.Random;
  */
 public class ServerManager extends Thread {
 
-    //保存服务线程,Key=RoomId,Value=ServerThread
-//    private static HashMap<Integer, ServerThread> serverThreads = new HashMap<>();
+    //保存服务线程
     private final ArrayList<ServerThread> serverList = new ArrayList<>();
+    private final DB db = DB.getInstance();
 
     //隐藏构造器
     private ServerManager() {
@@ -69,22 +68,42 @@ public class ServerManager extends Thread {
     }
 
     /**
-     * 返回新可用端口
+     * 插入好友关系，并启动服务线程
      */
-    public int newPort() {
-        while (true) {
-            boolean exist = false;
-            //定义一个范围在30000~60000的端口号
-            int port = new Random().nextInt(60000) + 30000;
-            //遍历服务池，查看是否有相同的端口
-            for (ServerThread s : serverList) {
-                if (s.getPort() == port) {
-                    exist = true;
-                    break;
+    public RoomInfo insertFriendship(int uid, int friends_uid) {
+
+        int status = db.insertFriendship(uid, friends_uid);
+        if (status != DB.PENDING) {
+            RoomInfo roomInfo = db.queryRoomInfoByRoomId(status);
+            if (roomInfo != null) {
+                try {
+                    createServerThread(roomInfo.port, roomInfo.roomId);
+                    return roomInfo;
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-            if (!exist) return port;
         }
+        return null;
+    }
+
+    /**
+     * 创建群聊，并启动服务线程
+     */
+    public RoomInfo createGroup(String groupName, int uid) {
+
+        int roomId = db.insertRoomInfo(groupName, DB.MODE_GROUPS);
+        db.insertRoom(roomId, uid);
+        RoomInfo roomInfo = db.queryRoomInfoByRoomId(roomId);
+        if (roomInfo != null) {
+            try {
+                createServerThread(roomInfo.port, roomId);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return roomInfo;
+        }
+        return null;
     }
 
     /**

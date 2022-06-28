@@ -2,6 +2,7 @@ package ui.chat.code;
 
 import base.client.ClientManager;
 import db.DB;
+import entity.Message;
 import entity.RoomInfo;
 import entity.User;
 import javafx.collections.ObservableList;
@@ -11,13 +12,12 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
-import ui.chat.code.data.RemindCount;
-import ui.chat.code.data.TalkBoxData;
 import ui.chat.code.element.group_bar_friend.FriendList;
 import ui.chat.code.element.group_bar_friend.GroupList;
 import ui.chat.code.element.group_bar_friend.ListTag;
 import ui.chat.code.element.group_bar_friend.NewFriend;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import static utils.StringUtil.isNumeric;
@@ -27,8 +27,8 @@ import static utils.StringUtil.isNumeric;
  */
 public class ChatView {
 
-    private ChatController controller;
-    private IChatEvent chatEvent;
+    private final ChatController controller;
+    private final IChatEvent chatEvent;
 
     public ChatView(ChatController controller, IChatEvent chatEvent) {
         this.controller = controller;
@@ -49,9 +49,9 @@ public class ChatView {
     private void initFriendTag() {
 
         //获取好友列表的Item
-        ObservableList<Pane> items = controller.friendList.getItems();
+        ObservableList<Pane> items = controller.contactList.getItems();
         //清空好友列表的Item
-        controller.friendList.getSelectionModel().clearSelection();
+        controller.contactList.getSelectionModel().clearSelection();
         //新建[新的好友]Tag
         ListTag listTag = new ListTag("新的朋友");
         //往列表中添加[新的好友]Tag
@@ -107,21 +107,30 @@ public class ChatView {
      * 群聊Tag和群聊列表
      */
     private void initGroupList() {
-        //添加
-        ObservableList<Pane> items = controller.friendList.getItems();
+        ObservableList<Pane> items = controller.contactList.getItems();
         ListTag listTag = new ListTag("群聊");
         items.add(listTag.pane());
 
         GroupList groupList = new GroupList();
         Pane pane = groupList.pane();
         items.add(pane);
+        controller.groupsList_Pane = pane;
+        controller.groupsList_ListView = groupList.listView();
+        //从数据库获取群组并加载列表
+        DB db = DB.getInstance();
+        ArrayList<RoomInfo> roomInfos = db.queryRoomInfo(controller.userId);
+        for (RoomInfo r : roomInfos) {
+            if (r.mode == DB.MODE_GROUPS) {
+                controller.addFriendGroup(false, r);
+            }
+        }
     }
 
     /**
      * 好友Tag和好友列表
      */
     private void initFriendList() {
-        ObservableList<Pane> items = controller.friendList.getItems();
+        ObservableList<Pane> items = controller.contactList.getItems();
         ListTag listTag = new ListTag("好友");
         items.add(listTag.pane());
 
@@ -145,7 +154,20 @@ public class ChatView {
         DB db = DB.getInstance();
         ArrayList<RoomInfo> rooms = db.queryRoomInfo(controller.userId);
         for (RoomInfo room : rooms) {
+            //初始化消息列表
             controller.addTalkBox(-1, room, false);
+            //往消息列表加载聊天数据
+            try {
+                ArrayList<Message> messages = db.queryRecord(room.roomId);
+                for (Message message : messages) {
+                    if (message.uid == controller.userId)
+                        controller.addTalkMsgRight(message, false, false, false);
+                    else
+                        controller.addTalkMsgLeft(message, false, false, false);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
             //创建连接到该服务端口的客户端
             ClientManager.createClientThread(room.port, room.roomId, controller.userId);
         }
@@ -167,85 +189,5 @@ public class ChatView {
         //标题
         Label info_name = controller.$("content_name", Label.class);
         info_name.setText(name);
-    }
-
-
-    /**
-     * @param talkPane       对话框元素面板
-     * @param msgRemindLabel 消息提醒标签
-     * @param idxFirst       是否设置首位
-     * @param selected       是否选中
-     * @param isRemind       是否提醒
-     * @Describe 更新对话框列表元素位置指定并选中[在聊天消息发送时触达]
-     */
-    void updateTalkListIdxAndSelected(Pane talkPane, Label msgRemindLabel, Boolean idxFirst, Boolean selected, Boolean isRemind) {
-        // 对话框ID、好友ID
-        TalkBoxData talkBoxData = (TalkBoxData) talkPane.getUserData();
-        // 填充到对话框
-        ListView<Pane> talkList = controller.$("talkList", ListView.class);
-        // 对话空为空，初始化[置顶、选中、提醒]
-        if (talkList.getItems().isEmpty()) {
-            if (idxFirst) {
-                talkList.getItems().add(0, talkPane);
-            }
-            if (selected) {
-                // 设置对话框[√选中]
-                talkList.getSelectionModel().select(talkPane);
-            }
-            isRemind(msgRemindLabel, isRemind);
-            return;
-        }
-
-        // 对话空不为空，判断第一个元素是否当前聊天Pane
-        Pane firstPane = talkList.getItems().get(0);
-        // 判断元素是否在首位，如果是首位可返回不需要重新设置首位
-        if (talkBoxData.getRoomId() == ((TalkBoxData) firstPane.getUserData()).getRoomId()) {
-            Pane selectedItem = talkList.getSelectionModel().getSelectedItem();
-            // 选中判断；如果第一个元素已经选中[说明正在会话]，那么清空消息提醒
-            if (null == selectedItem) {
-                isRemind(msgRemindLabel, isRemind);
-                return;
-            }
-            TalkBoxData selectedItemUserData = (TalkBoxData) selectedItem.getUserData();
-            if (null != selectedItemUserData && talkBoxData.getRoomId() == selectedItemUserData.getRoomId()) {
-                clearRemind(msgRemindLabel);
-            } else {
-                isRemind(msgRemindLabel, isRemind);
-            }
-            return;
-        }
-        if (idxFirst) {
-            talkList.getItems().remove(talkPane);
-            talkList.getItems().add(0, talkPane);
-        }
-        if (selected) {
-            // 设置对话框[√选中]
-            talkList.getSelectionModel().select(talkPane);
-        }
-        isRemind(msgRemindLabel, isRemind);
-    }
-
-    /**
-     * 消息提醒
-     *
-     * @param msgRemindLabel 消息面板
-     */
-    private void isRemind(Label msgRemindLabel, Boolean isRemind) {
-        if (!isRemind) return;
-        msgRemindLabel.setVisible(true);
-        RemindCount remindCount = (RemindCount) msgRemindLabel.getUserData();
-        // 超过10个展示省略号
-        if (remindCount.getCount() > 99) {
-            msgRemindLabel.setText("···");
-            return;
-        }
-        int count = remindCount.getCount() + 1;
-        msgRemindLabel.setUserData(new RemindCount(count));
-        msgRemindLabel.setText(String.valueOf(count));
-    }
-
-    private void clearRemind(Label msgRemindLabel) {
-        msgRemindLabel.setVisible(false);
-        msgRemindLabel.setUserData(new RemindCount(0));
     }
 }

@@ -3,10 +3,7 @@ package ui.chat.code;
 import entity.User;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.StageStyle;
@@ -24,25 +21,34 @@ public abstract class Chat extends UIParent {
     public String userHeader;
     // 输入框
     public TextArea txt_input;
-    //最小化
+    //最小化&关闭
     public Button group_bar_chat_min;
     public Button group_bar_friend_min;
-    //关闭
     public Button group_bar_chat_close;
     public Button group_bar_friend_close;
-    //聊天界面按钮&聊天界面
+    //聊天界面按钮&聊天界面&聊天列表
     public Button bar_chat;
     public Pane group_bar_chat;
-    //好友界面按钮&好友界面&好友列表
-    public Button bar_friend;
+    public ListView talkList;
+
+    //联系人列表&联系人界面&联系人按钮
+    public ListView<Pane> contactList;
     public Pane group_bar_friend;
-    public ListView<Pane> friendsList_ListView;
+    public Button bar_friend;
+
+    //好友界面按钮&好友界面&好友列表
     public Pane friendsList_Pane;
-    public ListView<Pane> friendList;
+    public ListView<Pane> friendsList_ListView;
+
+    //群组界面按钮&群聊界面&群聊列表
+    public Pane groupsList_Pane;
+    public ListView<Pane> groupsList_ListView;
+
     //发送
     public Label touch_send;
-    //聊天列表
-    public ListView talkList;
+    //建群
+    public TextField input_groupName;
+    public Button group_add;
 
     Chat(User user) throws IOException {
         this.userId = user.getUid();
@@ -75,7 +81,9 @@ public abstract class Chat extends UIParent {
         group_bar_friend = $("group_bar_friend", Pane.class);
         touch_send = $("touch_send", Label.class);
         talkList = $("talkList", ListView.class);
-        friendList = $("friendList", ListView.class);
+        contactList = $("friendList", ListView.class);
+        group_add = $("group_add", Button.class);
+        input_groupName = $("input_groupName", TextField.class);
     }
 
     public abstract void initView();

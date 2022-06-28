@@ -16,8 +16,8 @@ import static base.Constants.ONLINE;
  */
 public class DB {
 
-    public final static int PENDING = 1; //待接受的好友
-    public final static int ACCEPTED = 2;//已接受的好友
+    public final static int PENDING = -11; //待接受的好友
+    public final static int ACCEPTED = -12;//已接受的好友
     public final static int ALL = 3;//全部好友
     public final static int MODE_SINGLE = 1;//好友
     public final static int MODE_GROUPS = 2;//群聊
@@ -25,10 +25,10 @@ public class DB {
     private final static int SUCCESS = 1;
     private final static int ERROR = 0;
     PreparedStatement insertRecord;
+    PreparedStatement insertRoomInfo;
     PreparedStatement queryRecord;
     PreparedStatement queryUsers;
     PreparedStatement queryRelationship;
-    PreparedStatement insertRoomInfo;
     PreparedStatement queryRoomInfo;
     PreparedStatement queryFriends;
     private Connection conn;
@@ -43,8 +43,6 @@ public class DB {
         return DBHolder.instance;
     }
 
-    public static void main(String[] args) throws SQLException {
-    }
 
     /**
      * 连接数据库
@@ -344,6 +342,27 @@ public class DB {
         return infos;
     }
 
+    public RoomInfo queryRoomInfoByRoomId(int roomId) {
+        try {
+            ResultSet info = queryRoomInfo.executeQuery();
+            while (info.next()) {
+                if (info.getInt("room_id") == roomId)
+                    return new RoomInfo(
+                            info.getInt("room_id"),
+                            info.getString("room_Name"),
+                            info.getString("header"),
+                            info.getString("talkSketch"),
+                            info.getLong("timestamp"),
+                            info.getInt("port"),
+                            info.getInt("mode")
+                    );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     /**
      * 返回所有聊天室信息
      *
@@ -496,8 +515,9 @@ public class DB {
      * @param uid
      * @param friends_uid
      * @throws SQLException
+     * @return
      */
-    public void insertFriendship(int uid, int friends_uid) {
+    public int insertFriendship(int uid, int friends_uid) {
         try {
             PreparedStatement sql
                     = conn.prepareStatement("insert into friends(uid,friend_uid, status) value (?,?,?)");
@@ -526,7 +546,8 @@ public class DB {
                             + " (" + roomId + "," + uid + ")");
                     insertRelationship.execute("insert into room(room_id, uid) VALUE"
                             + " (" + roomId + "," + friends_uid + ")");
-                    return;
+
+                    return roomId;
                 }
             }
             //建立好友申请
@@ -538,6 +559,24 @@ public class DB {
             sql.setInt(2, uid);
             sql.setInt(3, PENDING);
             sql.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return PENDING;
+    }
+
+    /**
+     * 插入群聊关系
+     *
+     * @param roomId
+     * @param uid
+     * @throws SQLException
+     */
+    public void insertRoom(int roomId, int uid) {
+        try {
+            Statement insertRelationship = conn.createStatement();
+            insertRelationship.execute("insert into room(room_id, uid) VALUE"
+                    + " (" + roomId + "," + uid + ")");
         } catch (SQLException e) {
             e.printStackTrace();
         }

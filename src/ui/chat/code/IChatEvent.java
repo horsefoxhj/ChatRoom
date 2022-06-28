@@ -1,7 +1,9 @@
 package ui.chat.code;
 
 import entity.Message;
+import entity.RoomInfo;
 import entity.User;
+import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Pane;
 
@@ -20,20 +22,9 @@ public interface IChatEvent {
     void doSendMsg(Message message);
 
     /**
-     * 事件处理；开启与好友发送消息 [点击发送消息时候触发 -> 添加到对话框、选中、展示对话列表]
-     *
-     * @param userId   用户ID
-     * @param friendId 好友ID
+     * 事件处理；跳转到room聊天框
      */
-    void doAddTalkUser(int userId, int friendId);
-
-    /**
-     * 事件处理；开启与群组发送消息
-     *
-     * @param userId  用户ID
-     * @param groupId 群组ID
-     */
-    void doAddTalkGroup(int userId, String groupId);
+    void switch2TalkPaneG(Button sendMsgButton, RoomInfo roomInfo);
 
     /**
      * 事件处理；删除指定对话框
@@ -69,8 +60,6 @@ public interface IChatEvent {
 
     /**
      * 创建群聊
-     *
-     * @param uid 个人ID
      */
-    void doCreateGroup(int uid);
+    void doCreateGroup();
 }

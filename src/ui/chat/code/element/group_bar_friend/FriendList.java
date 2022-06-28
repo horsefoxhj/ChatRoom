@@ -17,7 +17,7 @@ public class FriendList {
         pane = new Pane();
         pane.setId("friendsList_Pane");
         pane.setPrefWidth(314);
-        pane.setPrefHeight(0);// 自动计算；userListView.setPrefHeight(70 * items.size() + 10);
+        pane.setPrefHeight(0);
         pane.setLayoutX(-10);
         pane.getStyleClass().add("friendsList_Pane");
         ObservableList<Node> children = pane.getChildren();
@@ -25,7 +25,7 @@ public class FriendList {
         userList = new ListView<>();
         userList.setId("friends_ListView");
         userList.setPrefWidth(314);
-        userList.setPrefHeight(0); // 自动计算；userListView.setPrefHeight(70 * items.size() + 10);
+        userList.setPrefHeight(0);
         userList.setLayoutX(-10);
         userList.getStyleClass().add("friends_listView");
         children.add(userList);

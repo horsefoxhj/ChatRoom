@@ -7,11 +7,11 @@ import javafx.scene.layout.Pane;
 import ui.chat.code.data.GroupsData;
 import ui.util.Ids;
 
-public class ElementFriendGroup {
+public class GroupListItem {
 
     private Pane groupPane;
 
-    public ElementFriendGroup(String groupId, String groupName, String groupHead) {
+    public GroupListItem(int groupId, String groupName, String groupHead) {
         // 群组底板(存储群ID)
         groupPane = new Pane();
         groupPane.setId(Ids.TalkListId.createFriendGroupId(groupId));
@@ -25,8 +25,8 @@ public class ElementFriendGroup {
         groupHeadLabel.setPrefSize(50, 50);
         groupHeadLabel.setLayoutX(15);
         groupHeadLabel.setLayoutY(10);
-        groupHeadLabel.getStyleClass().add("elementFriendGroup_head");
-        groupHeadLabel.setStyle(String.format("-fx-background-image: url('../img/%s.png')", groupHead));
+        groupHeadLabel.getStyleClass().add("elementGroup_head");
+        groupHeadLabel.setStyle(String.format("-fx-background-image: url('file:src/ui/chat/img/%s.png')", groupHead));
         children.add(groupHeadLabel);
         // 名称区域
         Label groupNameLabel = new Label();
@@ -34,7 +34,7 @@ public class ElementFriendGroup {
         groupNameLabel.setLayoutX(80);
         groupNameLabel.setLayoutY(15);
         groupNameLabel.setText(groupName);
-        groupNameLabel.getStyleClass().add("elementFriendGroup_name");
+        groupNameLabel.getStyleClass().add("elementGroup_name");
         children.add(groupNameLabel);
     }
 

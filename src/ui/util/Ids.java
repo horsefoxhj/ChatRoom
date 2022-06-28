@@ -42,8 +42,8 @@ public class Ids {
             return id.split("_")[2];
         }
 
-        public static String createFriendGroupId(String id) {
-            return "TalkId_FriendGroupId_" + id;
+        public static String createFriendGroupId(int id) {
+            return "TalkId_GroupId_" + id;
         }
 
     }

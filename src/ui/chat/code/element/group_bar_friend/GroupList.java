@@ -35,5 +35,5 @@ public class GroupList {
     public Pane pane() {
         return pane;
     }
-
+    public ListView<Pane> listView(){return groupListView;}
 }
