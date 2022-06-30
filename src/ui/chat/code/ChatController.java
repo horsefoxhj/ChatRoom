@@ -20,6 +20,7 @@ import ui.util.CacheUtil;
 import ui.util.Ids;
 
 import java.io.IOException;
+import java.util.Date;
 
 public class ChatController extends Chat implements IChatMethod {
 
@@ -153,6 +154,7 @@ public class ChatController extends Chat implements IChatMethod {
     @Override
     public void addTalkMsgLeft(Message message, Boolean idxFirst, Boolean selected, Boolean isRemind) {
         TalkListItem talkListItem = CacheUtil.talkMap.get(message.roomId);
+        talkListItem.fillMsgSketch(message.text,new Date(message.timeStamp));
         ListView<Pane> listView = talkListItem.infoBoxList();
         //查询用户
         User user = DB.getInstance().queryUserById(message.uid);
@@ -169,6 +171,7 @@ public class ChatController extends Chat implements IChatMethod {
     @Override
     public void addTalkMsgRight(Message message, Boolean idxFirst, Boolean selected, Boolean isRemind) {
         TalkListItem talkListItem = CacheUtil.talkMap.get(message.roomId);
+        talkListItem.fillMsgSketch(message.text,new Date(message.timeStamp));
         ListView<Pane> listView = talkListItem.infoBoxList();
         Pane right = new MsgBox().right(userHeader, message.text);
         // 消息填充
@@ -264,8 +267,6 @@ public class ChatController extends Chat implements IChatMethod {
             chatView.setContentPaneBox(user.getUid(), user.getName(), detailContent);
         });
     }
-
-
 
     /**
      * @param talkPane       对话框元素面板

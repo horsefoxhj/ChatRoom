@@ -1,10 +1,8 @@
 package base;
 
-import entity.User;
 import javafx.application.Application;
 import javafx.stage.Stage;
-import ui.chat.code.ChatController;
-import ui.util.CacheUtil;
+import ui.login.code.LoginController;
 
 /**
  * @Author Hx
@@ -19,15 +17,15 @@ public class Launcher extends Application {
     @Override
     public void start(Stage stage) {
         try {
-//            LoginController loginController = new LoginController();
-//            loginController.doShow();
-            User user = new User();
-            user.setUid(1127);
-            user.setName("小何");
-            user.setHeader("header");
-            ChatController chatController = new ChatController(user);
-            CacheUtil.chatController = chatController;
-            chatController.doShow();
+            LoginController loginController = new LoginController();
+            loginController.doShow();
+//            User user = new User();
+//            user.setUid(1127);
+//            user.setName("小何");
+//            user.setHeader("header");
+//            ChatController chatController = new ChatController(user);
+//            CacheUtil.chatController = chatController;
+//            chatController.doShow();
         } catch (Exception e) {
             e.printStackTrace();
         }

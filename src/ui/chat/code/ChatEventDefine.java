@@ -200,36 +200,36 @@ public class ChatEventDefine implements IChatEvent {
                 item.statusLabel().setText("已添加");
                 item.statusLabel().getStyleClass().clear();
                 item.statusLabel().setUserData(2);
-                item.statusLabel().getStyleClass().add("newFriendItem_statusLabel_2");
+                item.statusLabel().getStyleClass().add("newFriendItem_statusLabel_" + DB.ACCEPTED);
                 doAddFriend(chat.userId, (Integer) item.pane().getUserData());
             });
             listView.getItems().add(item.pane());
         }
     }
 
-    @Override
-    public void doSearchFriend(int friendId) {
-        ListView<Pane> listView = chat.$("newFriend_ListView", ListView.class);
-        //从数据库中搜索用户
-        DB db = DB.getInstance();
-        User user = db.queryUserById(friendId);
-        // 搜索清空元素
-        listView.getItems().clear();
-        //查询结果不为null,且结果不为本人,且不是本人的朋友
-        if (user != null && user.getUid() != chat.userId) {
-            ArrayList<User> users = db.queryFriends(chat.userId, ALL);
-            //将搜索到的用户加载到列表
-            for (User s : users) {
-                //用户是好友
-                if (s.getUid() == user.getUid()) {
-                    doLoadNewFriend(user, listView, DB.ACCEPTED);
-                    return;
-                }
+@Override
+public void doSearchFriend(int friendId) {
+    ListView<Pane> listView = chat.$("newFriend_ListView", ListView.class);
+    //从数据库中搜索用户
+    DB db = DB.getInstance();
+    User user = db.queryUserById(friendId);
+    // 搜索清空元素
+    listView.getItems().clear();
+    //查询结果不为null,且结果不为本人,且不是本人的朋友
+    if (user != null && user.getUid() != chat.userId) {
+        ArrayList<User> users = db.queryFriends(chat.userId, ALL);
+        //将搜索到的用户加载到列表
+        for (User s : users) {
+            //用户是好友
+            if (s.getUid() == user.getUid()) {
+                doLoadNewFriend(user, listView, DB.ACCEPTED);
+                return;
             }
-            //用户不是好友
-            doLoadNewFriend(user, listView, DB.PENDING);
         }
+        //用户不是好友
+        doLoadNewFriend(user, listView, DB.PENDING);
     }
+}
 
     @Override
     public void doAddFriend(int userId, int friendId) {
@@ -241,7 +241,6 @@ public class ChatEventDefine implements IChatEvent {
 
     @Override
     public void doCreateGroup() {
-
         chat.group_add.setOnMousePressed(mouseEvent -> {
             String groupName = chat.input_groupName.getText();
             RoomInfo roomInfo = ServerManager.getInstance().createGroup(groupName, chat.userId);

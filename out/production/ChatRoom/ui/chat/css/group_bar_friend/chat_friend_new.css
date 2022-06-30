@@ -121,7 +121,7 @@
     -fx-background-color: #1aad19;
 }
 
-.newFriendItem_statusLabel_1, .newFriendItem_statusLabel_0:pressed {
+.newFriendItem_statusLabel_-11, .newFriendItem_statusLabel_0:pressed {
     -fx-background-color: #129611;
     -fx-text-align: center;
     -fx-text-fill: white;
@@ -132,11 +132,11 @@
     -fx-border-radius: 2px;
 }
 
-.newFriendItem_statusLabel_1:hover {
+.newFriendItem_statusLabel_-11:hover {
     -fx-background-color: #1aad19;
 }
 
-.newFriendItem_statusLabel_2, .newFriendItem_statusLabel_0:pressed, .newFriendItem_statusLabel_2:hover {
+.newFriendItem_statusLabel_-12, .newFriendItem_statusLabel_0:pressed, .newFriendItem_statusLabel_-12:hover {
     -fx-text-align: center;
     -fx-text-fill: #999999;
     -fx-alignment: center;

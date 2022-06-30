@@ -8,8 +8,6 @@ package ui.login.code;
 public interface ILoginEvent {
     /**
      * 登陆验证
-     * @param userId        用户ID
-     * @param userPassword  用户密码
      */
     void doLogin();
 }

@@ -3,8 +3,6 @@ package ui.login.code;
 import base.login.LoginDataSource;
 import base.login.Result;
 import entity.User;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 
 /**
  * @Author Hx
@@ -48,22 +46,19 @@ public class LoginEventDefine implements ILoginEvent {
     //绑定登录事件
     @Override
     public void doLogin() {
-        login.btn_login.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                //数据库检验账号，并返回检验结果
-                Result result = new LoginDataSource()
-                        .login(login.account.getText(), login.password.getText());
+        login.btn_login.setOnAction(actionEvent -> {
+            //数据库检验账号，并返回检验结果
+            Result result = new LoginDataSource()
+                    .login(login.account.getText(), login.password.getText());
 
-                //登陆结果为Success
-                if (result instanceof Result.Success) {
-                    User user = ((Result.Success<User>) result).getData();
-                    loginMethod.doLoginSuccess(user);
-                }
-                //登录结果为Error
-                else {
-                    loginMethod.doLoginError();
-                }
+            //登陆结果为Success
+            if (result instanceof Result.Success) {
+                User user = ((Result.Success<User>) result).getData();
+                loginMethod.doLoginSuccess(user);
+            }
+            //登录结果为Error
+            else {
+                loginMethod.doLoginError();
             }
         });
     }

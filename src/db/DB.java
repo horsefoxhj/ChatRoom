@@ -94,6 +94,7 @@ public class DB {
                 e.printStackTrace();
             }
         }
+
         //初始化用户表，创建好友关系映射表，聊天室信息表
         Statement statement = null;
         try {
@@ -101,6 +102,7 @@ public class DB {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         try {
 
             //选择数据库chatroom
@@ -117,13 +119,9 @@ public class DB {
             statement.execute("truncate table user");
             //初始化用户
             User[] users = {
-                    new User(1127, "小何", "123456", "123456"),
-                    new User(1225, "小潘", "654321", "654321"),
-                    new User(510, "小谢", "111111", "111111"),
-                    new User(1124, "小林", "222222", "222222"),
-                    new User(717, "小川", "101010", "101010"),
-                    new User(53, "小辜", "666666", "666666"),
-            };
+                    new User(1127, "小何", "123456", "123456", "header"),
+                    new User(1225, "小潘", "654321", "654321", "pan"),
+                    new User(717, "小川", "101010", "101010", "chuan")};
             insertUser(users);
             System.out.println("user表初始化成功~");
 
@@ -156,6 +154,19 @@ public class DB {
                     "timestamp   bigint        not null," +
                     "uid         int           not null," +
                     "text        text          not null);");
+
+            statement.execute("insert into roominfo(room_id, room_Name, header, port, mode) " +
+                    "VALUE (1,'相亲相爱打工人','header',30001,2)on duplicate key update port = 30001");
+            statement.execute("insert into roominfo(room_id, room_Name, header, port, mode) " +
+                    "VALUE (2,'咱们三','header',30002,2)on duplicate key update port = 30002");
+
+//            statement.execute("truncate table room");
+//            statement.execute("insert into room(room_id, uid) VALUE (1,1127)");
+//            statement.execute("insert into room(room_id, uid) VALUE (1,1225)");
+//            statement.execute("insert into room(room_id, uid) VALUE (2,1127)");
+//            statement.execute("insert into room(room_id, uid) VALUE (2,1225)");
+//            statement.execute("insert into room(room_id, uid) VALUE (2,717)");
+
         } catch (SQLException e) {
             e.printStackTrace();
             System.out.println(e.getMessage());
@@ -197,7 +208,6 @@ public class DB {
             queryRelationship = conn.prepareStatement("select * from room");
             queryRoomInfo = conn.prepareStatement("select * from roominfo");
             queryRecord = conn.prepareStatement("select * from record");
-
         } catch (SQLException e) {
             e.printStackTrace();
             System.out.println(e.getMessage());
@@ -261,7 +271,8 @@ public class DB {
                                 User user = new User(users.getInt("uid"),
                                         users.getString("name"),
                                         users.getString("account"),
-                                        users.getString("password"));
+                                        users.getString("password"),
+                                        users.getString("head"));
                                 //设置好友状态，是否在线
                                 if (users.getInt("online") == ONLINE)
                                     user.setStatus(ONLINE);
@@ -292,7 +303,8 @@ public class DB {
                     return new User(res.getInt("uid"),
                             res.getString("name"),
                             res.getString("account"),
-                            res.getString("password"));
+                            res.getString("password"),
+                            res.getString("head"));
                 }
             }
         } catch (SQLException e) {
@@ -342,6 +354,10 @@ public class DB {
         return infos;
     }
 
+    /**
+     * @param roomId
+     * @return
+     */
     public RoomInfo queryRoomInfoByRoomId(int roomId) {
         try {
             ResultSet info = queryRoomInfo.executeQuery();
@@ -499,12 +515,13 @@ public class DB {
     public void insertUser(User[] users) throws SQLException {
 
         PreparedStatement sql
-                = conn.prepareStatement("insert into user(uid,name,account,password) value (?,?,?,?)");
+                = conn.prepareStatement("insert into user(uid,name,account,password,head) value (?,?,?,?,?)");
         for (int i = 0; i < users.length; i++) {
             sql.setInt(1, users[i].getUid());
             sql.setString(2, users[i].getName());
             sql.setString(3, users[i].getAccount());
             sql.setString(4, users[i].getPassword());
+            sql.setString(5,users[i].getHeader());
             sql.executeUpdate();
         }
     }
@@ -514,8 +531,8 @@ public class DB {
      *
      * @param uid
      * @param friends_uid
-     * @throws SQLException
      * @return
+     * @throws SQLException
      */
     public int insertFriendship(int uid, int friends_uid) {
         try {
@@ -531,9 +548,9 @@ public class DB {
 
                     //更新好友状态
                     Statement statement = conn.createStatement();
-                    statement.execute("update friends set status = 2 where uid =" + friends_uid
+                    statement.execute("update friends set status = -12 where uid =" + friends_uid
                             + " and friend_uid =" + uid);
-                    statement.execute("update friends set status = 2 where uid =" + uid
+                    statement.execute("update friends set status = -12 where uid =" + uid
                             + " and friend_uid =" + friends_uid);
 
                     //建立聊天室

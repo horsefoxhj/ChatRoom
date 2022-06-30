@@ -1,5 +1,6 @@
 package ui.chat.code.element.group_bar_friend;
 
+import db.DB;
 import entity.User;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -71,9 +72,9 @@ public class NewFriendItem {
         statusLabel.setPrefSize(56, 30);
         statusLabel.setLayoutX(650);
         statusLabel.setLayoutY(20);
-        if (1 == status) {
+        if (DB.PENDING == status) {
             statusLabel.setText("Ìí¼Ó");
-        } else if (2 == status) {
+        } else if (DB.ACCEPTED == status) {
             statusLabel.setText("ÒÑÌí¼Ó");
         }
         statusLabel.setUserData(status);

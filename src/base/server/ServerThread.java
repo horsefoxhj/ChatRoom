@@ -25,10 +25,10 @@ public class ServerThread extends Thread {
     private final int port;
     //当前聊天室的ServerSocket
     private final ServerSocket serverSocket;
+    //保存连接到该服务线程的Client的socket;
+    private final List<Socket> sockets;
     //当前聊天室的id
     public int roomId;
-    //保存连接到该服务线程的Client的socket;
-    private volatile List<Socket> sockets;
 
     public ServerThread(int port, int roomId) throws IOException {
         sockets = Collections.synchronizedList(new ArrayList<>());
@@ -78,8 +78,8 @@ public class ServerThread extends Thread {
     /**
      * 从sockets中移除指定socket
      */
-    public boolean removeSocket(Socket s) {
-        return sockets.remove(s);
+    public void removeSocket(Socket s) {
+        sockets.remove(s);
     }
 
     /**
@@ -88,63 +88,65 @@ public class ServerThread extends Thread {
     public List<Socket> getSockets() {
         return sockets;
     }
-}
 
-/**
- * 消息线程，接受单个客户端发来的消息并向所有客户端广播
- */
-class MsgHandler implements Runnable {
-
-    private final Socket socket;
-    private final BufferedReader in;
-    private final ServerThread serverThread;
-
-    public MsgHandler(Socket socket, ServerThread serverThread) throws IOException {
-        this.serverThread = serverThread;
-        this.socket = socket;
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-    }
-
-    @Override
-    public void run() {
-        String msg;
-
-        while ((msg = readMsg()) != null) {
-            try {
-                System.out.println(msg);
-                Message message = Str2Msg(msg);
-                System.out.println("收到Id为" + message.uid + "的消息：" + message.text);
-                //向所有客户端广播
-                List<Socket> sockets = serverThread.getSockets();
-                for (Socket s : sockets) {
-                    PrintWriter out = new PrintWriter(s.getOutputStream());
-                        if (s != this.socket) {
-                            out.println(msg);
-                            out.flush();
-                        }
-                }
-
-                DB db = DB.getInstance();
-                db.insertRecord(serverThread.roomId, message.uid, message.text);
-            } catch (IOException | SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     /**
-     * 读取客户端消息
+     * 消息线程，接受单个客户端发来的消息并向所有客户端广播
      */
-    private String readMsg() {
-        try {
-            return in.readLine();
+    static class MsgHandler implements Runnable {
+
+        private final Socket socket;
+        private final BufferedReader in;
+        private final ServerThread serverThread;
+
+        public MsgHandler(Socket socket, ServerThread serverThread) throws IOException {
+            this.serverThread = serverThread;
+            this.socket = socket;
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         }
-        //捕获到异常，说明该Socket对应client已经关闭
-        catch (IOException e) {
-            //删除该Socket
-            serverThread.removeSocket(socket);
-            System.out.println("客户端" + socket.getPort() + "断开");
+
+        @Override
+        public void run() {
+            String msg;
+
+while ((msg = readMsg()) != null) {
+    try {
+        System.out.println(msg);
+        Message message = Str2Msg(msg);
+        System.out.println("收到Id为" + message.uid + "的消息：" + message.text);
+        //向所有客户端广播
+        List<Socket> sockets = serverThread.getSockets();
+        for (Socket s : sockets) {
+            PrintWriter out = new PrintWriter(s.getOutputStream());
+            if (s != this.socket) {
+                out.println(msg);
+                out.flush();
+            }
         }
-        return null;
+
+        DB db = DB.getInstance();
+        db.insertRecord(serverThread.roomId, message.uid, message.text);
+    } catch (IOException | SQLException e) {
+        e.printStackTrace();
     }
 }
+        }
+
+        /**
+         * 读取客户端消息
+         */
+        private String readMsg() {
+            try {
+                return in.readLine();
+            }
+            //捕获到异常，说明该Socket对应client已经关闭
+            catch (IOException e) {
+                //删除该Socket
+                serverThread.removeSocket(socket);
+                System.out.println("客户端" + socket.getPort() + "断开");
+            }
+            return null;
+        }
+    }
+}
+

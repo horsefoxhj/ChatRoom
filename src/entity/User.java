@@ -16,13 +16,13 @@ public class User {
     private String password;
     private String header;
 
-    public User(int uid, String name, String account, String password) {
+    public User(int uid, String name, String account, String password, String header) {
         this.status = OFFLINE;
         this.uid = uid;
         this.name = name;
         this.account = account;
         this.password = password;
-        this.header = "header";
+        this.header = header;
     }
 
     public User() {
